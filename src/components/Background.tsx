@@ -16,14 +16,32 @@ const fetchBackgrounds = async () => {
     },
   );
   const authData: AuthResponse = await authResponse.json();
+  // const gameIds = await fetchPopularGameIds(authData.access_token);
+  const gameIds = [
+    "28489", // Aoe4
+    "2950", // Aoe2
+    "299", // AoE3
+    "104967", // Valheim
+    "15894", // HoI4
+    "250616", // Helldivers 2
+    "3189", // Project Zomboid
+    "11582", // Stellaris
+    "28489", // Ready or Not
+  ];
+
+  const artworkUrls = await getArtworkUrls(gameIds, authData.access_token);
+  return artworkUrls.sort(() => Math.random() - 0.5);
+};
+
+const getArtworkUrls = async (gameIds: string[], accessToken: string) => {
   const response = await fetch("https://api.igdb.com/v4/artworks", {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Client-ID": process.env.NEXT_TWITCH_CLIENT_ID as string,
-      Authorization: `Bearer ${authData.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
-    body: "fields alpha_channel,animated,checksum,game,height,image_id,url,width; sort date desc;",
+    body: `fields id, game, url; sort popularity desc; limit 50; where game = (${gameIds.join(",")});`,
   });
   const body = await response.json();
   return body.map((artwork: { url: string }) =>
