@@ -1,7 +1,9 @@
-import { CalendarDays } from "lucide-react";
+import { Calendar, CalendarDays } from "lucide-react";
+import Link from "next/link";
 import { formatDistanceToNow, isToday } from "date-fns";
 import { nl } from "date-fns/locale/nl";
 import fetchBookings from "@/lib/fetchBookings";
+import { Button } from "@/components/ui/button";
 
 const formatRelativeTime = (date: Date) => {
   const distance = formatDistanceToNow(date, { addSuffix: true, locale: nl });
@@ -77,6 +79,12 @@ export default async function Component() {
           </div>
         )}
       </div>
+      <Button className="absolute bottom-4 right-4" asChild>
+        <Link href="/ical.ics">
+          <Calendar className="md:mr-1" />{" "}
+          <span className="hidden md:inline">Toevoegen aan agenda</span>
+        </Link>
+      </Button>
     </div>
   );
 }
