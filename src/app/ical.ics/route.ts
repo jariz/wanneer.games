@@ -18,7 +18,7 @@ export async function GET() {
           new Date(booking.date).getUTCMinutes(),
         ],
         startInputType: "utc",
-        duration: { hours: 1 }, // Adjust this based on your booking duration
+        duration: { hours: 3 }, 
         title: `Game sessie: ${booking.game ?? "onbekend"}`,
         organizer: { name: "wanneer.games", email: "jarizw+wanneer@gmail.com" },
       }),
