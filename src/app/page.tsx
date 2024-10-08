@@ -74,9 +74,16 @@ export default async function Component() {
             </span>
           )}
         </h1>
-        <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-12">
-          {nextSession ? `Game: ${nextSession.game}` : "-- Niks ingepland --"}
-        </p>
+        {nextSession.game && (
+          <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-12">
+            Game: {nextSession.game}
+          </p>
+        )}
+        {!nextSession && (
+          <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-12">
+            -- Niks ingepland --
+          </p>
+        )}
         {futureSessions.length > 0 && (
           <div className="bg-gray-900/20 rounded-lg shadow-2xl backdrop-blur-md p-6 max-w-md mx-auto border border-gray-800">
             <h2 className="text-2xl font-bold mb-4 flex items-center justify-center text-gray-100">

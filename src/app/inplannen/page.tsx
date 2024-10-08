@@ -3,12 +3,14 @@ import Cal from "@calcom/embed-react";
 import { getCalApi } from "@calcom/embed-react";
 import { useRouter } from "next/navigation";
 import { invalidate } from "../actions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, RefreshCcw } from "lucide-react";
+import Spinner from "@/components/spinner";
 
 const Inplannen = () => {
   const { push } = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   useEffect(() => {
     const bindEvents = async () => {
@@ -16,6 +18,7 @@ const Inplannen = () => {
       cal("on", {
         action: "bookingSuccessful",
         callback: async () => {
+          setIsLoading(true);
           toast({
             title: (
               <>
@@ -40,16 +43,21 @@ const Inplannen = () => {
   }, [push, toast]);
 
   return (
-    <div className="w-full">
-      <Cal
-        calLink="jari-eilpsm/3w2narypfrcjmzja"
-        config={{
-          theme: "dark",
-          name: "Gamer",
-          email: "jarizw+cal@gmail.com",
-        }}
-      ></Cal>
-    </div>
+    <>
+      {!isLoading && (
+        <div className="w-full">
+          <Cal
+            calLink="jari-eilpsm/3w2narypfrcjmzja"
+            config={{
+              theme: "dark",
+              name: "Gamer",
+              email: "jarizw+cal@gmail.com",
+            }}
+          />
+        </div>
+      )}
+      {isLoading && <Spinner />}
+    </>
   );
 };
 export default Inplannen;
