@@ -22,7 +22,7 @@ const Inplannen = () => {
           toast({
             title: (
               <>
-                <RefreshCcw className="inline mr-2" /> Invalidating cache...
+                <RefreshCcw className="inline" /> Invalidating cache...
               </>
             ) as unknown as string,
           });

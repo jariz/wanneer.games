@@ -53,7 +53,7 @@ export default async function Component() {
         <p className="text-xl font-bold sm:text-2xl md:text-3xl text-gray-300 mb-6">
           Wanneer games?
         </p>
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black mb-4 leading-snug">
+        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black mb-12 leading-snug">
           {nextSession ? (
             <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
               {formatRelativeTime(nextSession.date)}
