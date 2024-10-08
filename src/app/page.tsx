@@ -19,6 +19,7 @@ const formatDateWithRelative = (date: Date) => {
     minute: "2-digit",
   })} (${formatRelativeTime(date)})`;
 };
+export const revalidate = 3600
 
 export default async function Component() {
   const bookings = await fetchBookings();
