@@ -49,6 +49,23 @@ const getArtworkUrls = async (gameIds: string[], accessToken: string) => {
   );
 };
 
+// const fetchPopularGameIds = async (accessToken: string) => {
+//   const response = await fetch(
+//     "https://api.igdb.com/v4/popularity_primitives",
+//     {
+//       method: "POST",
+//       headers: {
+//         Accept: "application/json",
+//         "Client-ID": process.env.NEXT_TWITCH_CLIENT_ID as string,
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//       body: "fields game_id,value,popularity_type; sort value desc; limit 10; where popularity_type = 1;",
+//     },
+//   );
+//   const body: { game_id: string }[] = await response.json();
+//   return body.map((game) => game.game_id);
+// };
+
 const Background = async () => {
   const backgrounds = await fetchBackgrounds();
   return (
