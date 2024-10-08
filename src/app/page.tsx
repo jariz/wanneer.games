@@ -1,31 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import { formatDistanceToNow, isToday } from "date-fns";
 import { nl } from "date-fns/locale/nl";
-
-interface BookingResponse {
-  bookings: Array<{
-    status: string;
-    startTime: string;
-    responses: {
-      game: string;
-    };
-  }>;
-}
-
-const fetchBookings = async () => {
-  const response = await fetch(
-    `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`,
-    { next: { tags: ["bookings"] } },
-  );
-  const body: BookingResponse = await response.json();
-  return body.bookings
-    .filter((booking) => booking.status === "ACCEPTED")
-    .map((booking) => ({
-      game: booking.responses.game,
-      date: new Date(booking.startTime),
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-};
+import fetchBookings from "@/lib/fetchBookings";
 
 const formatRelativeTime = (date: Date) => {
   const distance = formatDistanceToNow(date, { addSuffix: true, locale: nl });
