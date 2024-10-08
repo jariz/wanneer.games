@@ -88,7 +88,7 @@ export default async function Component() {
           <div className="bg-gray-900/20 rounded-lg shadow-2xl backdrop-blur-md p-6 max-w-md mx-auto border border-gray-800">
             <h2 className="text-2xl font-bold mb-4 flex items-center justify-center text-gray-100">
               <CalendarDays className="mr-2 text-cyan-400" />
-              Alle ingeplande sessies
+              Toekomstige sessies
             </h2>
             <ul className="space-y-2">
               {futureSessions.map(({ date, game }, index) => (
