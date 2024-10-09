@@ -4,12 +4,18 @@ import { formatDistanceToNow, isToday } from "date-fns";
 import { nl } from "date-fns/locale/nl";
 import fetchBookings from "@/lib/fetchBookings";
 import { Button } from "@/components/ui/button";
+import { toZonedTime } from "date-fns-tz";
 
 const formatRelativeTime = (date: Date) => {
-  const distance = formatDistanceToNow(date, { addSuffix: true, locale: nl });
+  const timeZone = "Europe/Amsterdam";
+  const zonedDate = toZonedTime(date, timeZone);
+  const distance = formatDistanceToNow(zonedDate, {
+    addSuffix: true,
+    locale: nl,
+  });
+
   return distance.charAt(0).toUpperCase() + distance.slice(1);
 };
-
 const formatDateWithRelative = (date: Date) => {
   return `${date.toLocaleDateString("nl-NL", {
     weekday: "short",
@@ -17,9 +23,10 @@ const formatDateWithRelative = (date: Date) => {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Amsterdam",
   })} (${formatRelativeTime(date)})`;
 };
-export const revalidate = 3600
+export const revalidate = 3600;
 
 export default async function Component() {
   const bookings = await fetchBookings();
@@ -41,9 +48,11 @@ export default async function Component() {
                 ? nextSession.date.toLocaleString("nl-NL", {
                     hour: "2-digit",
                     minute: "2-digit",
+                    timeZone: "Europe/Amsterdam",
                   })
                 : nextSession.date.toLocaleDateString("nl-NL", {
                     weekday: "long",
+                    timeZone: "Europe/Amsterdam",
                   })}
               )
             </span>
