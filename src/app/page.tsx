@@ -22,7 +22,6 @@ const formatDateWithRelative = (date: Date) => {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Europe/Amsterdam",
   })} (${formatRelativeTime(date)})`;
 };
 export const revalidate = 600;
@@ -56,11 +55,9 @@ export default async function Component() {
                   ? nextZonedDate.toLocaleString("nl-NL", {
                       hour: "2-digit",
                       minute: "2-digit",
-                      timeZone: "Europe/Amsterdam",
                     })
                   : nextZonedDate.toLocaleDateString("nl-NL", {
                       weekday: "long",
-                      timeZone: "Europe/Amsterdam",
                     })}
                 )
               </span>
