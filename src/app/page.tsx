@@ -1,28 +1,33 @@
 import { Calendar, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow, isBefore, isToday, startOfToday } from "date-fns";
+import {
+  formatDistance,
+  isBefore,
+  isToday,
+  startOfToday,
+} from "date-fns";
 import { nl } from "date-fns/locale/nl";
 import fetchBookings from "@/lib/fetchBookings";
 import { Button } from "@/components/ui/button";
 import { toZonedTime } from "date-fns-tz";
 import Confetti from "@/components/confetti";
 
-const formatRelativeTime = (date: Date) => {
-  const distance = formatDistanceToNow(date, {
+const formatRelativeTime = (date: Date, now: Date) => {
+  const distance = formatDistance(date, now, {
     addSuffix: true,
     locale: nl,
   });
 
   return distance.charAt(0).toUpperCase() + distance.slice(1);
 };
-const formatDateWithRelative = (date: Date) => {
+const formatDateWithRelative = (date: Date, now: Date) => {
   return `${date.toLocaleDateString("nl-NL", {
     weekday: "short",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  })} (${formatRelativeTime(date)})`;
+  })} (${formatRelativeTime(date, now)})`;
 };
 export const revalidate = 600;
 
@@ -30,7 +35,8 @@ export default async function Component() {
   const bookings = await fetchBookings(startOfToday());
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
-  const shouldDoConfetti = isBefore(nextSession?.date, new Date());
+  const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");
+  const shouldDoConfetti = isBefore(nextSession?.date, zonedNow);
   const nextZonedDate = toZonedTime(nextSession?.date, "Europe/Amsterdam");
 
   return (
@@ -49,7 +55,7 @@ export default async function Component() {
           {!shouldDoConfetti &&
             (nextSession ? (
               <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
-                {formatRelativeTime(nextZonedDate)}
+                {formatRelativeTime(nextZonedDate, zonedNow)}
                 <br />(
                 {isToday(nextZonedDate)
                   ? nextZonedDate.toLocaleString("nl-NL", {
@@ -86,7 +92,7 @@ export default async function Component() {
             <ul className="space-y-2">
               {futureSessions.map(({ date, game }, index) => (
                 <li key={index} className="text-lg text-gray-300">
-                  {formatDateWithRelative(date)}
+                  {formatDateWithRelative(date, zonedNow)}
                   {game ? ` - ${game}` : ""}
                 </li>
               ))}
