@@ -36,8 +36,8 @@ export default async function Component() {
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");
-  const shouldDoConfetti = isBefore(nextSession?.date, zonedNow);
-  const nextZonedDate = toZonedTime(nextSession?.date, "Europe/Amsterdam");
+  const shouldDoConfetti = isBefore(zonedNow, zonedNow);
+  const nextZonedDate = toZonedTime(zonedNow, "Europe/Amsterdam");
 
   return (
     <div>
