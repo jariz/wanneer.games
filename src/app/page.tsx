@@ -1,10 +1,11 @@
 import { Calendar, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow, isToday } from "date-fns";
+import { formatDistanceToNow, isBefore, isToday, startOfToday } from "date-fns";
 import { nl } from "date-fns/locale/nl";
 import fetchBookings from "@/lib/fetchBookings";
 import { Button } from "@/components/ui/button";
 import { toZonedTime } from "date-fns-tz";
+import Confetti from "@/components/confetti";
 
 const formatRelativeTime = (date: Date) => {
   const timeZone = "Europe/Amsterdam";
@@ -29,38 +30,46 @@ const formatDateWithRelative = (date: Date) => {
 export const revalidate = 3600;
 
 export default async function Component() {
-  const bookings = await fetchBookings();
+  const bookings = await fetchBookings(startOfToday());
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
+  const shouldDoConfetti = isBefore(nextSession?.date, new Date());
 
   return (
     <div>
       <div className="text-center">
+        {shouldDoConfetti && <Confetti />}
         <p className="text-xl font-bold sm:text-2xl md:text-3xl text-gray-300 mb-6">
           Wanneer games?
         </p>
         <h1 className="text-5xl sm:text-7xl md:text-8xl font-black mb-12 leading-snug">
-          {nextSession ? (
-            <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
-              {formatRelativeTime(nextSession.date)}
-              <br />(
-              {isToday(nextSession.date)
-                ? nextSession.date.toLocaleString("nl-NL", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZone: "Europe/Amsterdam",
-                  })
-                : nextSession.date.toLocaleDateString("nl-NL", {
-                    weekday: "long",
-                    timeZone: "Europe/Amsterdam",
-                  })}
-              )
-            </span>
-          ) : (
-            <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-red-400 to-pink-500">
-              Onbekend!
+          {shouldDoConfetti && (
+            <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-yellow-400 to-red-500">
+              Nu!
             </span>
           )}
+          {!shouldDoConfetti &&
+            (nextSession ? (
+              <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
+                {formatRelativeTime(nextSession.date)}
+                <br />(
+                {isToday(nextSession.date)
+                  ? nextSession.date.toLocaleString("nl-NL", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Europe/Amsterdam",
+                    })
+                  : nextSession.date.toLocaleDateString("nl-NL", {
+                      weekday: "long",
+                      timeZone: "Europe/Amsterdam",
+                    })}
+                )
+              </span>
+            ) : (
+              <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-red-400 to-pink-500">
+                Onbekend!
+              </span>
+            ))}
         </h1>
         {nextSession.game && (
           <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-12">

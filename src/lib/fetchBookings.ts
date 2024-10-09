@@ -9,11 +9,14 @@ interface BookingResponse {
     };
   }>;
 }
-const fetchBookings = async () => {
-  const response = await fetch(
-    `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`,
-    { next: { tags: ["bookings"], revalidate: 60 * 60 } },
-  );
+const fetchBookings = async (after?: Date) => {
+  let url = `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`;
+  if (after) {
+    url += `&afterStart=${after.toISOString()}`;
+  }
+  const response = await fetch(url, {
+    next: { tags: ["bookings"], revalidate: 60 * 60 },
+  });
   const body: BookingResponse = await response.json();
   return body.bookings
     .filter((booking) => booking.status === "ACCEPTED")
