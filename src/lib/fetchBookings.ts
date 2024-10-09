@@ -15,7 +15,7 @@ const fetchBookings = async (after?: Date) => {
     url += `&afterStart=${after.toISOString()}`;
   }
   const response = await fetch(url, {
-    next: { tags: ["bookings"], revalidate: 60 * 60 },
+    next: { tags: ["bookings"], revalidate: 600 },
   });
   const body: BookingResponse = await response.json();
   return body.bookings

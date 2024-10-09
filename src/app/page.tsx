@@ -8,9 +8,7 @@ import { toZonedTime } from "date-fns-tz";
 import Confetti from "@/components/confetti";
 
 const formatRelativeTime = (date: Date) => {
-  const timeZone = "Europe/Amsterdam";
-  const zonedDate = toZonedTime(date, timeZone);
-  const distance = formatDistanceToNow(zonedDate, {
+  const distance = formatDistanceToNow(date, {
     addSuffix: true,
     locale: nl,
   });
@@ -27,13 +25,14 @@ const formatDateWithRelative = (date: Date) => {
     timeZone: "Europe/Amsterdam",
   })} (${formatRelativeTime(date)})`;
 };
-export const revalidate = 3600;
+export const revalidate = 600;
 
 export default async function Component() {
   const bookings = await fetchBookings(startOfToday());
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const shouldDoConfetti = isBefore(nextSession?.date, new Date());
+  const nextZonedDate = toZonedTime(nextSession?.date, "Europe/Amsterdam");
 
   return (
     <div>
@@ -51,15 +50,15 @@ export default async function Component() {
           {!shouldDoConfetti &&
             (nextSession ? (
               <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
-                {formatRelativeTime(nextSession.date)}
+                {formatRelativeTime(nextZonedDate)}
                 <br />(
-                {isToday(nextSession.date)
-                  ? nextSession.date.toLocaleString("nl-NL", {
+                {isToday(nextZonedDate)
+                  ? nextZonedDate.toLocaleString("nl-NL", {
                       hour: "2-digit",
                       minute: "2-digit",
                       timeZone: "Europe/Amsterdam",
                     })
-                  : nextSession.date.toLocaleDateString("nl-NL", {
+                  : nextZonedDate.toLocaleDateString("nl-NL", {
                       weekday: "long",
                       timeZone: "Europe/Amsterdam",
                     })}
