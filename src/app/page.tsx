@@ -92,7 +92,7 @@ export default async function Component() {
             <ul className="space-y-2">
               {futureSessions.map(({ date, game }, index) => (
                 <li key={index} className="text-lg text-gray-300">
-                  {formatDateWithRelative(toZonedTime(date, "Europe/Amsterdam")), zonedNow)}
+                  {formatDateWithRelative(toZonedTime(date, "Europe/Amsterdam"), zonedNow)}
                   {game ? ` - ${game}` : ""}
                 </li>
               ))}
