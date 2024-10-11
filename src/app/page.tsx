@@ -32,7 +32,7 @@ const formatDateWithRelative = (date: Date, now: Date) => {
 export const revalidate = 60;
 
 export default async function Component() {
-  const bookings = await fetchBookings(startOfToday());
+  const bookings = await fetchBookings();
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");

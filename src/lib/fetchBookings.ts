@@ -1,5 +1,7 @@
 "use server";
 
+import { isAfter, startOfDay } from "date-fns";
+
 interface BookingResponse {
   bookings: Array<{
     status: string;
@@ -9,16 +11,14 @@ interface BookingResponse {
     };
   }>;
 }
-const fetchBookings = async (after?: Date) => {
-  let url = `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`;
-  if (after) {
-    url += `&afterStart=${after.toISOString()}`;
-  }
+const fetchBookings = async () => {
+  const url = `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`;
   const response = await fetch(url, {
     next: { tags: ["bookings"], revalidate: 600 },
   });
   const body: BookingResponse = await response.json();
   return body.bookings
+    .filter((booking) => isAfter(new Date(booking.startTime), startOfDay(new Date())))
     .filter((booking) => booking.status === "ACCEPTED")
     .map((booking) => ({
       game: booking.responses.game,
