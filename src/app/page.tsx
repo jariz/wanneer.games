@@ -32,22 +32,22 @@ export default async function Component() {
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");
   const nextZonedDate = toZonedTime(nextSession?.date, "Europe/Amsterdam");
-  const shouldDoConfetti = isBefore(nextZonedDate, zonedNow);
+  const isSessionNow = isBefore(nextZonedDate, zonedNow);
 
   return (
     <div>
       <div className="text-center">
-        {shouldDoConfetti && <Confetti />}
+        {isSessionNow && <Confetti />}
         <p className="text-xl font-bold sm:text-2xl md:text-3xl text-gray-300 mb-6">
           Wanneer games?
         </p>
         <h1 className="text-5xl sm:text-7xl md:text-8xl font-black mb-12 leading-snug">
-          {shouldDoConfetti && (
+          {isSessionNow && (
             <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-yellow-400 to-red-500">
               Nu!
             </span>
           )}
-          {!shouldDoConfetti &&
+          {!isSessionNow &&
             (nextSession ? (
               <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
                 {formatRelativeTime(nextZonedDate, zonedNow)}
