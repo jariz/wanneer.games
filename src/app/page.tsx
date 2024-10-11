@@ -1,16 +1,11 @@
+import Confetti from "@/components/confetti";
+import { Button } from "@/components/ui/button";
+import fetchBookings from "@/lib/fetchBookings";
+import { formatDistance, isBefore, isToday } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { nl } from "date-fns/locale/nl";
 import { Calendar, CalendarDays } from "lucide-react";
 import Link from "next/link";
-import {
-  formatDistance,
-  isBefore,
-  isToday,
-  startOfToday,
-} from "date-fns";
-import { nl } from "date-fns/locale/nl";
-import fetchBookings from "@/lib/fetchBookings";
-import { Button } from "@/components/ui/button";
-import { toZonedTime } from "date-fns-tz";
-import Confetti from "@/components/confetti";
 
 const formatRelativeTime = (date: Date, now: Date) => {
   const distance = formatDistance(date, now, {
@@ -92,7 +87,10 @@ export default async function Component() {
             <ul className="space-y-2">
               {futureSessions.map(({ date, game }, index) => (
                 <li key={index} className="text-lg text-gray-300">
-                  {formatDateWithRelative(toZonedTime(date, "Europe/Amsterdam"), zonedNow)}
+                  {formatDateWithRelative(
+                    toZonedTime(date, "Europe/Amsterdam"),
+                    zonedNow,
+                  )}
                   {game ? ` - ${game}` : ""}
                 </li>
               ))}
