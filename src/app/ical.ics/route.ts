@@ -5,7 +5,7 @@ import fetchBookings from "@/lib/fetchBookings";
 export async function GET() {
   try {
     // Fetch bookings from Cal.com API
-    const bookings = await fetchBookings();
+    const bookings = await fetchBookings(false);
 
     // Map bookings to iCalendar event format
     const events = bookings.map(
