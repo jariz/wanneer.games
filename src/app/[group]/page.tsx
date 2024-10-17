@@ -65,7 +65,8 @@ export default async function Component({
             (nextSession ? (
               <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
                 {formatRelativeTime(nextZonedDate, zonedNow)}
-                &nbsp;({isToday(nextZonedDate)
+                &nbsp;(
+                {isToday(nextZonedDate)
                   ? nextZonedDate.toLocaleString("nl-NL", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -112,7 +113,7 @@ export default async function Component({
         )}
       </div>
       <Button className="absolute bottom-4 right-4" asChild>
-        <Link href="/ical.ics">
+        <Link href={`${group}/ical.ics`}>
           <Calendar className="md:mr-1" />{" "}
           <span className="hidden md:inline">Toevoegen aan agenda</span>
         </Link>
