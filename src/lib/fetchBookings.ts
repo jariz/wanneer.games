@@ -1,27 +1,38 @@
 "use server";
 
+import eventTypeMap from "@/const/eventTypeMap";
 import { isAfter, startOfDay } from "date-fns";
 
 interface BookingResponse {
-  bookings: Array<{
+  data: Array<{
     status: string;
-    startTime: string;
-    responses: {
+    start: string;
+    bookingFieldsResponses: {
       game: string;
     };
   }>;
 }
+
 const fetchBookings = async (removePastBookings: boolean, group: string) => {
-  const url = `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`;
+  const url = `https://api.cal.com/v2/bookings?status=upcoming&status=past&take=100&eventTypeId=${eventTypeMap[group]}`;
+  console.log(url);
   const response = await fetch(url, {
     next: { tags: ["bookings"], revalidate: 600 },
+    method: "GET",
+    headers: {
+      Authorization: process.env.NEXT_CAL_API_KEY as string,
+      "Cal-Api-Version": "2024-08-13",
+    },
   });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch bookings: ${response.statusText}`);
+  }
   const body: BookingResponse = await response.json();
-  const bookings = body.bookings
-    .filter((booking) => booking.status === "ACCEPTED")
+  console.log(body)
+  const bookings = body.data
     .map((booking) => ({
-      game: booking.responses.game,
-      date: new Date(booking.startTime),
+      game: booking.bookingFieldsResponses.game,
+      date: new Date(booking.start),
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   return removePastBookings

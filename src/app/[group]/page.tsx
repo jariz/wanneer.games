@@ -1,12 +1,14 @@
 import Confetti from "@/components/confetti";
 import GroupsTab from "@/components/groups-tab";
 import { Button } from "@/components/ui/button";
+import eventTypeMap from "@/const/eventTypeMap";
 import fetchBookings from "@/lib/fetchBookings";
 import { formatDistance, isBefore, isToday } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { nl } from "date-fns/locale/nl";
 import { Calendar, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 const formatRelativeTime = (date: Date, now: Date) => {
   const distance = formatDistance(date, now, {
@@ -27,13 +29,21 @@ const formatDateWithRelative = (date: Date, now: Date) => {
 };
 export const revalidate = 60;
 
-export default async function Component({params: { group }}: { params: { group: string } }) {
+export default async function Component({
+  params: { group },
+}: {
+  params: { group: string };
+}) {
   const bookings = await fetchBookings(true, group as string);
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");
   const nextZonedDate = toZonedTime(nextSession?.date, "Europe/Amsterdam");
   const isSessionNow = isBefore(nextZonedDate, zonedNow);
+
+  if (!((group as string) in eventTypeMap)) {
+    return notFound();
+  }
 
   return (
     <div className="flex-1 flex flex-col">
@@ -72,7 +82,7 @@ export default async function Component({params: { group }}: { params: { group: 
               </span>
             ))}
         </h1>
-        {nextSession.game && (
+        {nextSession?.game && (
           <p className="text-xl sm:text-2xl md:text-3xl text-gray-400 mb-12">
             Game: {nextSession.game}
           </p>
