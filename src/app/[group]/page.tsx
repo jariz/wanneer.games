@@ -47,10 +47,10 @@ export default async function Component({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="container">
+      <div className="container w-full px-6">
         <GroupsTab />
       </div>
-      <div className="text-center flex justify-center items-center flex-col flex-1">
+      <div className="text-center flex justify-center items-center flex-col flex-1 container px-6">
         {isSessionNow && <Confetti />}
         <p className="text-xl font-bold sm:text-2xl md:text-3xl text-gray-300 mb-6">
           Wanneer games?
@@ -65,8 +65,7 @@ export default async function Component({
             (nextSession ? (
               <span className="bg-clip-text leading-3 text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
                 {formatRelativeTime(nextZonedDate, zonedNow)}
-                <br />(
-                {isToday(nextZonedDate)
+                &nbsp;({isToday(nextZonedDate)
                   ? nextZonedDate.toLocaleString("nl-NL", {
                       hour: "2-digit",
                       minute: "2-digit",

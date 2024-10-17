@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 const GroupsTab: React.FC = () => {
   const { group } = useParams();
   return (
-    <Tabs defaultValue={group as string}>
+    <Tabs defaultValue={group as string} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger asChild value="kiwis">
           <Link href="/">🥝 Kiwi&#39;s</Link>

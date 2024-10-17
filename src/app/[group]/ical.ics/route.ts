@@ -10,6 +10,7 @@ const getEmoji = (group: string) => {
       return "🦔";
   }
 };
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: { group: string } },
