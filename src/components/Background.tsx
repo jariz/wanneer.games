@@ -69,7 +69,7 @@ const getArtworkUrls = async (gameIds: string[], accessToken: string) => {
 const Background = async () => {
   const backgrounds = await fetchBackgrounds();
   return (
-    <div className=" absolute inset-0 bg-blue-950">
+    <div className=" absolute inset-0 bg-blue-900">
       <BackgroundSlider backgroundImages={backgrounds} />
     </div>
   );

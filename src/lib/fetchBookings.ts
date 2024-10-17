@@ -11,7 +11,7 @@ interface BookingResponse {
     };
   }>;
 }
-const fetchBookings = async (removePastBookings: boolean) => {
+const fetchBookings = async (removePastBookings: boolean, group: string) => {
   const url = `https://api.cal.com/v1/bookings?apiKey=${process.env.NEXT_CAL_API_KEY}`;
   const response = await fetch(url, {
     next: { tags: ["bookings"], revalidate: 600 },

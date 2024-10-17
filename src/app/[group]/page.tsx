@@ -1,4 +1,5 @@
 import Confetti from "@/components/confetti";
+import GroupsTab from "@/components/groups-tab";
 import { Button } from "@/components/ui/button";
 import fetchBookings from "@/lib/fetchBookings";
 import { formatDistance, isBefore, isToday } from "date-fns";
@@ -26,8 +27,8 @@ const formatDateWithRelative = (date: Date, now: Date) => {
 };
 export const revalidate = 60;
 
-export default async function Component() {
-  const bookings = await fetchBookings(true);
+export default async function Component({params: { group }}: { params: { group: string } }) {
+  const bookings = await fetchBookings(true, group as string);
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");
@@ -35,8 +36,11 @@ export default async function Component() {
   const isSessionNow = isBefore(nextZonedDate, zonedNow);
 
   return (
-    <div>
-      <div className="text-center">
+    <div className="flex-1 flex flex-col">
+      <div className="container">
+        <GroupsTab />
+      </div>
+      <div className="text-center flex justify-center items-center flex-col flex-1">
         {isSessionNow && <Confetti />}
         <p className="text-xl font-bold sm:text-2xl md:text-3xl text-gray-300 mb-6">
           Wanneer games?

@@ -1,8 +1,8 @@
 "use client";
 import Cal from "@calcom/embed-react";
 import { getCalApi } from "@calcom/embed-react";
-import { useRouter } from "next/navigation";
-import { invalidate } from "../actions";
+import { useParams, useRouter } from "next/navigation";
+import { invalidate } from "../../actions";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, RefreshCcw } from "lucide-react";
@@ -12,6 +12,7 @@ const Inplannen = () => {
   const { push } = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { group } = useParams();
   useEffect(() => {
     const bindEvents = async () => {
       const cal = await getCalApi();
@@ -47,7 +48,7 @@ const Inplannen = () => {
       {!isLoading && (
         <div className="w-full">
           <Cal
-            calLink="jari-eilpsm/3w2narypfrcjmzja"
+            calLink={`jari-eilpsm/${group}`}
             config={{
               theme: "dark",
               name: "Gamer",
