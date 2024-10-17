@@ -1,11 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createEvents, EventAttributes } from "ics";
 import fetchBookings from "@/lib/fetchBookings";
 
-export async function GET() {
+const getEmoji = (group: string) => {
+  switch (group) {
+    case "kiwis":
+      return "🥝";
+    case "niglos":
+      return "🦔";
+  }
+};
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { group: string } },
+) {
   try {
     // Fetch bookings from Cal.com API
-    const bookings = await fetchBookings(false);
+    const bookings = await fetchBookings(false, params.group);
 
     // Map bookings to iCalendar event format
     const events = bookings.map(
@@ -18,8 +29,8 @@ export async function GET() {
           new Date(booking.date).getUTCMinutes(),
         ],
         startInputType: "utc",
-        duration: { hours: 3 }, 
-        title: `Game sessie: ${booking.game ?? "onbekend"}`,
+        duration: { hours: 3 },
+        title: `${getEmoji(params.group)} Gaming sessie: ${booking.game ?? "onbekend"}`,
         organizer: { name: "wanneer.games", email: "jarizw+wanneer@gmail.com" },
       }),
     );
