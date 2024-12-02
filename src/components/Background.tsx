@@ -27,6 +27,7 @@ const fetchBackgrounds = async () => {
     "3189", // Project Zomboid
     "11582", // Stellaris
     "28489", // Ready or Not
+    "3152", // Don't starve
   ];
 
   const artworkUrls = await getArtworkUrls(gameIds, authData.access_token);
