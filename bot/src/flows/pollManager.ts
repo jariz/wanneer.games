@@ -13,7 +13,7 @@ import { toZonedTime } from "date-fns-tz";
 import { db } from "../db/index";
 import { polls } from "../db/schema";
 import { formatSlot } from "./slotPicker";
-import createBooking from "@/lib/createBooking";
+import createBooking from "../../../shared/createBooking.ts";
 import { env } from "../env";
 
 const POLL_DURATION_HOURS = 24;

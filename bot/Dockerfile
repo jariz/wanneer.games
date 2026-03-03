@@ -1,8 +1,8 @@
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-# Install root dependencies (shared by src/lib files)
+# Install root dependencies (shared by shared/ files)
 COPY package*.json ./
 RUN npm ci --omit=dev
 
@@ -10,16 +10,12 @@ RUN npm ci --omit=dev
 COPY bot/package*.json ./bot/
 RUN cd bot && npm ci --omit=dev
 
-# Copy shared source files (Cal.com utilities, event type map)
-COPY src/lib/ ./src/lib/
-COPY src/const/ ./src/const/
-# Mark shared src files as ESM so tsx doesn't load them as CJS
-RUN echo '{"type":"module"}' > ./src/package.json
+# Copy shared source files
+COPY shared/ ./shared/
 
 # Copy bot source and migration files
 COPY bot/src/ ./bot/src/
 COPY bot/drizzle/ ./bot/drizzle/
-COPY bot/tsconfig.json ./bot/
 
 # Create data directory for SQLite
 RUN mkdir -p /data
@@ -27,4 +23,4 @@ RUN mkdir -p /data
 ENV DATABASE_URL=/data/bot.db
 ENV NODE_ENV=production
 
-CMD ["./bot/node_modules/.bin/tsx", "--tsconfig", "./bot/tsconfig.json", "bot/src/index.ts"]
+CMD ["node", "--experimental-strip-types", "bot/src/index.ts"]

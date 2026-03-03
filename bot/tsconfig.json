@@ -5,18 +5,7 @@
     "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "baseUrl": "..",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "skipLibCheck": true
   },
-  "include": ["src/**/*", "../src/**/*"],
-  "exclude": [
-    "../src/**/*.tsx",
-    "../src/env.ts",
-    "../src/hooks/**/*",
-    "../src/lib/fetchBookings.ts",
-    "../src/app/**/*"
-  ]
+  "include": ["src/**/*", "../shared/**/*"]
 }

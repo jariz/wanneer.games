@@ -18,9 +18,9 @@ No test suite exists in this project.
 
 ### Groups & routing
 
-Groups are defined in `src/const/eventTypeMap.ts` — a map from group slug (e.g. `kiwis`, `niglos`) to a Cal.com event type ID. Adding a new group requires adding an entry here and updating `src/components/groups-tab.tsx`.
+Groups are defined in `shared/eventTypeMap.ts` — a map from group slug (e.g. `kiwis`, `niglos`) to a Cal.com event type ID. Adding a new group requires adding an entry here and updating `components/groups-tab.tsx`.
 
-The root paths `/`, `/inplannen`, and `/ical.ics` are rewritten to the `kiwis` group via `next.config.mjs`. All actual pages live under `src/app/[group]/`.
+The root paths `/`, `/inplannen`, and `/ical.ics` are rewritten to the `kiwis` group via `next.config.mjs`. All actual pages live under `app/[group]/`.
 
 | Route | Purpose |
 |---|---|
@@ -31,8 +31,9 @@ The root paths `/`, `/inplannen`, and `/ical.ics` are rewritten to the `kiwis` g
 
 ### Data flow
 
-- **Bookings**: Fetched from Cal.com API v2 (`fetchBookings` in `src/lib/fetchBookings.ts`) using `NEXT_CAL_API_KEY`. Cached with tag `bookings` (10-minute revalidation). Cache is invalidated on successful booking (via the `invalidate` server action in `src/app/actions.ts`) and can also be triggered externally via `POST /invalidate-bookings`.
-- **Background images**: Fetched server-side in `src/components/Background.tsx` from IGDB using Twitch OAuth (`NEXT_TWITCH_CLIENT_ID`, `NEXT_TWITCH_CLIENT_SECRET`). A fixed list of game IDs is used (not dynamic).
+- **Bookings**: Fetched from Cal.com API v2 (`fetchBookings` in `lib/fetchBookings.ts`) using `NEXT_CAL_API_KEY`. Cached with tag `bookings` (10-minute revalidation). Cache is invalidated on successful booking (via the `invalidate` server action in `app/actions.ts`) and can also be triggered externally via `POST /invalidate-bookings`.
+- **Background images**: Fetched server-side in `components/Background.tsx` from IGDB using Twitch OAuth (`NEXT_TWITCH_CLIENT_ID`, `NEXT_TWITCH_CLIENT_SECRET`). A fixed list of game IDs is used (not dynamic).
+- **Shared code**: `shared/` contains code used by both Next.js and the bot (`fetchSlots.ts`, `createBooking.ts`, `eventTypeMap.ts`).
 
 ### Environment variables
 

@@ -1,7 +1,7 @@
 import Confetti from "@/components/confetti";
 import GroupsTab from "@/components/groups-tab";
 import { Button } from "@/components/ui/button";
-import eventTypeMap from "@/const/eventTypeMap";
+import eventTypeMap from "@/shared/eventTypeMap";
 import fetchBookings from "@/lib/fetchBookings";
 import { formatDistance, isBefore, isToday } from "date-fns";
 import { toZonedTime } from "date-fns-tz";

@@ -1,4 +1,4 @@
-import eventTypeMap from "@/const/eventTypeMap";
+import eventTypeMap from "./eventTypeMap.ts";
 import { addDays } from "date-fns";
 
 interface SlotsResponse {
