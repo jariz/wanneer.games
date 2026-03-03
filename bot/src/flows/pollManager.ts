@@ -48,12 +48,12 @@ export const createPoll = async (
 
   const finishButton = new ButtonBuilder()
     .setCustomId(`poll_finish:${pollMessage.id}`)
-    .setLabel("✅ Poll afronden")
+    .setLabel("Poll afronden")
     .setStyle(ButtonStyle.Success);
 
   const cancelButton = new ButtonBuilder()
     .setCustomId(`poll_cancel:${pollMessage.id}`)
-    .setLabel("❌ Annuleer")
+    .setLabel("Annuleren")
     .setStyle(ButtonStyle.Danger);
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -62,7 +62,7 @@ export const createPoll = async (
   );
 
   const companionMessage = await channel.send({
-    content: "Poll loopt 24 uur. Eerder afsluiten?",
+    // content: "Poll loopt 24 uur. Eerder afsluiten?",
     components: [row],
   });
 
@@ -120,8 +120,12 @@ export const finalizePoll = async (
   )) as Message<true>;
 
   if (reason === "manual") {
-    await pollMessage.poll?.end();
-    // Refetch to get final vote counts after expiry
+    try {
+      await pollMessage.poll?.end();
+    } catch (err) {
+      console.error("Could not end poll via API (may have already expired):", err);
+    }
+    // Refetch to get final vote counts
     const refreshed = (await channel.messages.fetch(
       poll.pollMessageId,
     )) as Message<true>;

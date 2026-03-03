@@ -24,6 +24,43 @@ export const formatSlot = (date: Date): string => {
   });
 };
 
+const buildComponents = (
+  remaining: Date[],
+  selected: Date[],
+  originalIndices: number[],
+) => {
+  const confirmButton = new ButtonBuilder()
+    .setCustomId("slot_confirm")
+    .setLabel("Maak poll")
+    .setStyle(ButtonStyle.Primary)
+    .setDisabled(selected.length === 0);
+
+  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton);
+
+  if (remaining.length === 0) return [row2];
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId("slot_select")
+    .setPlaceholder("Voeg tijden toe aan de poll...")
+    .setMinValues(1)
+    .setMaxValues(Math.min(10, remaining.length))
+    .addOptions(
+      remaining.slice(0, 25).map((slot, i) => ({
+        label: formatSlot(slot),
+        value: String(originalIndices[i]),
+      }))
+    );
+
+  const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+  return [row1, row2];
+};
+
+const buildContent = (selected: Date[]) => {
+  if (selected.length === 0) return "Selecteer de tijden die je in de poll wilt zetten:";
+  const list = selected.map((s) => `• ${formatSlot(s)}`).join("\n");
+  return `**Geselecteerd:**\n${list}\n\nVoeg meer toe of bevestig:`;
+};
+
 export const runSlotPicker = async (
   interaction: ChatInputCommandInteraction,
   group: string,
@@ -40,49 +77,35 @@ export const runSlotPicker = async (
     return null;
   }
 
-  const select = new StringSelectMenuBuilder()
-    .setCustomId("slot_select")
-    .setPlaceholder("Selecteer tijden voor de poll...")
-    .setMinValues(1)
-    .setMaxValues(Math.min(10, slots.length))
-    .addOptions(
-      slots.slice(0, 25).map((slot, i) => ({
-        label: formatSlot(slot),
-        value: String(i),
-      }))
-    );
-
-  const confirmButton = new ButtonBuilder()
-    .setCustomId("slot_confirm")
-    .setLabel("Maak poll")
-    .setStyle(ButtonStyle.Primary)
-    .setDisabled(true);
-
-  const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
-  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton);
+  // Track which original indices are still available
+  let remainingIndices = slots.slice(0, 25).map((_, i) => i);
+  let remainingSlots = slots.slice(0, 25);
+  let selectedSlots: Date[] = [];
 
   const reply = await interaction.editReply({
-    content: "Selecteer de tijden die je in de poll wilt zetten:",
-    components: [row1, row2],
+    content: buildContent(selectedSlots),
+    components: buildComponents(remainingSlots, selectedSlots, remainingIndices),
   });
-
-  let selectedIndices: number[] = [];
 
   const collector = reply.createMessageComponentCollector({
     componentType: ComponentType.StringSelect,
-    time: 5 * 60 * 1000, // 5 minute timeout
+    time: 5 * 60 * 1000,
   });
 
   collector.on("collect", async (selectInteraction: StringSelectMenuInteraction) => {
-    selectedIndices = selectInteraction.values.map(Number);
+    const pickedOriginalIndices = selectInteraction.values.map(Number);
+    const pickedSlots = pickedOriginalIndices.map((i) => slots[i]);
 
-    const updatedButton = ButtonBuilder.from(confirmButton).setDisabled(false);
-    const updatedRow = new ActionRowBuilder<ButtonBuilder>().addComponents(updatedButton);
+    selectedSlots = [...selectedSlots, ...pickedSlots];
+    remainingIndices = remainingIndices.filter((i) => !pickedOriginalIndices.includes(i));
+    remainingSlots = remainingIndices.map((i) => slots[i]);
 
-    await selectInteraction.update({ components: [row1, updatedRow] });
+    await selectInteraction.update({
+      content: buildContent(selectedSlots),
+      components: buildComponents(remainingSlots, selectedSlots, remainingIndices),
+    });
   });
 
-  // Wait for the confirm button
   try {
     const buttonInteraction = await reply.awaitMessageComponent({
       componentType: ComponentType.Button,
@@ -92,22 +115,13 @@ export const runSlotPicker = async (
 
     collector.stop();
 
-    if (selectedIndices.length === 0) {
-      await buttonInteraction.update({
-        content: "❌ Geen tijden geselecteerd.",
-        components: [],
-      });
-      return null;
-    }
-
     await buttonInteraction.update({
       content: "✅ Poll wordt aangemaakt...",
       components: [],
     });
 
-    return selectedIndices.map((i) => slots[i]);
+    return selectedSlots;
   } catch {
-    // Timeout
     await interaction.editReply({
       content: "⏱️ Timeout — probeer opnieuw met /wanneer.",
       components: [],
