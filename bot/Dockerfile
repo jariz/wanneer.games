@@ -2,6 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install root dependencies (shared by src/lib files)
+COPY package*.json ./
+RUN npm ci --omit=dev
+
 # Copy bot dependencies and install
 COPY bot/package*.json ./bot/
 RUN cd bot && npm ci --omit=dev
