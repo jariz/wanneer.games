@@ -120,7 +120,12 @@ export const finalizePoll = async (
   )) as Message<true>;
 
   if (reason === "manual") {
-    return _processResults(poll, channel, pollMessage);
+    await pollMessage.poll?.end();
+    // Refetch to get final vote counts after ending
+    const refreshed = (await channel.messages.fetch(
+      poll.pollMessageId,
+    )) as Message<true>;
+    return _processResults(poll, channel, refreshed);
   }
 
   return _processResults(poll, channel, pollMessage);

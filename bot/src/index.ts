@@ -43,6 +43,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const channel = interaction.channel;
       if (!(channel instanceof TextChannel)) return;
+      const pollMessage = await channel.messages.fetch(pollMessageId) as Message<true>;
+      await pollMessage.poll?.end();
       await db
         .update(polls)
         .set({ status: "cancelled" })
