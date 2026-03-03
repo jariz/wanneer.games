@@ -1,10 +1,10 @@
 import { Client, Events, GatewayIntentBits, Message, REST, Routes, TextChannel } from "discord.js";
 import { eq } from "drizzle-orm";
-import { env } from "./env";
-import { runMigrations, db } from "./db/index";
-import { polls } from "./db/schema";
-import { data as wanneerData, execute } from "./commands/wanneer";
-import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager";
+import { env } from "./env.ts";
+import { runMigrations, db } from "./db/index.ts";
+import { polls } from "./db/schema.ts";
+import { data as wanneerData, execute } from "./commands/wanneer.ts";
+import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager.ts";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],

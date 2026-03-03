@@ -2,8 +2,8 @@ import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
 } from "discord.js";
-import { runSlotPicker } from "../flows/slotPicker";
-import { createPoll } from "../flows/pollManager";
+import { runSlotPicker } from "../flows/slotPicker.ts";
+import { createPoll } from "../flows/pollManager.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("wanneer")
