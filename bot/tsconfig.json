@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*", "../src/**/*"],
+  "exclude": [
+    "../src/**/*.tsx",
+    "../src/env.ts",
+    "../src/hooks/**/*",
+    "../src/lib/fetchBookings.ts",
+    "../src/app/**/*"
+  ]
+}
