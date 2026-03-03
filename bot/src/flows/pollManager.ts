@@ -9,7 +9,6 @@ import {
   TextChannel,
 } from "discord.js";
 import { eq } from "drizzle-orm";
-import { toZonedTime } from "date-fns-tz";
 import { db } from "../db/index.ts";
 import { polls } from "../db/schema.ts";
 import { formatSlot } from "./slotPicker.ts";
@@ -165,8 +164,7 @@ const _processResults = async (
     return;
   }
 
-  const zonedDate = toZonedTime(winningSlot, "Europe/Amsterdam");
-  const formattedDate = zonedDate.toLocaleDateString("nl-NL", {
+  const formattedDate = winningSlot.toLocaleDateString("nl-NL", {
     weekday: "long",
     day: "numeric",
     month: "long",
