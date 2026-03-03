@@ -4,12 +4,17 @@ import {
   ButtonStyle,
   ChatInputCommandInteraction,
   Client,
+  Message,
   PollLayoutType,
   TextChannel,
 } from "discord.js";
+import { eq } from "drizzle-orm";
+import { toZonedTime } from "date-fns-tz";
 import { db } from "../db/index.js";
 import { polls } from "../db/schema.js";
 import { formatSlot } from "./slotPicker.js";
+import createBooking from "@/lib/createBooking.js";
+import { env } from "../env.js";
 
 const POLL_DURATION_HOURS = 24;
 
@@ -88,10 +93,85 @@ export const schedulePollFinalization = (
   setTimeout(() => finalizePoll(pollMessageId, "expired"), delay);
 };
 
-// Stub — implemented in Task 10
 export const finalizePoll = async (
-  _pollMessageId: string,
-  _reason: "expired" | "manual"
+  pollMessageId: string,
+  reason: "expired" | "manual"
 ): Promise<void> => {
-  // TODO: implemented in Task 10
+  const poll = await db.query.polls.findFirst({
+    where: eq(polls.pollMessageId, pollMessageId),
+  });
+
+  if (!poll || poll.status !== "active") return;
+
+  const channel = botClient.channels.cache.get(poll.channelId) as TextChannel;
+  const pollMessage = await channel.messages.fetch(poll.pollMessageId) as Message<true>;
+
+  if (reason === "manual") {
+    await pollMessage.poll?.end();
+    // Refetch to get final vote counts after expiry
+    const refreshed = await channel.messages.fetch(poll.pollMessageId) as Message<true>;
+    return _processResults(poll, channel, refreshed);
+  }
+
+  return _processResults(poll, channel, pollMessage);
+};
+
+const _processResults = async (
+  poll: typeof polls.$inferSelect,
+  channel: TextChannel,
+  pollMessage: Message<true>
+): Promise<void> => {
+  const slotIsos: string[] = JSON.parse(poll.slots);
+  const answers = [...(pollMessage.poll?.answers.values() ?? [])];
+
+  // Find winning slot: most votes; tie → earliest (lowest index = earliest since slots are sorted)
+  let winnerIndex = 0;
+  let maxVotes = -1;
+  for (let i = 0; i < answers.length; i++) {
+    if ((answers[i].voteCount ?? 0) > maxVotes) {
+      maxVotes = answers[i].voteCount ?? 0;
+      winnerIndex = i;
+    }
+  }
+
+  const winningSlot = new Date(slotIsos[winnerIndex]);
+
+  try {
+    await createBooking({
+      group: poll.group,
+      start: winningSlot,
+      game: poll.game ?? undefined,
+    });
+
+    await fetch(env.NEXT_INVALIDATE_URL, { method: "POST" });
+  } catch (err) {
+    console.error("Failed to create booking:", err);
+    await channel.send(`❌ Kon sessie niet inplannen: ${String(err)}`);
+    return;
+  }
+
+  const zonedDate = toZonedTime(winningSlot, "Europe/Amsterdam");
+  const formattedDate = zonedDate.toLocaleDateString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Amsterdam",
+  });
+
+  await channel.send(
+    `✅ Ingepland! **${formattedDate}**${poll.game ? ` — ${poll.game}` : ""}`
+  );
+
+  // Disable companion message buttons
+  if (poll.companionMessageId) {
+    const companion = await channel.messages.fetch(poll.companionMessageId);
+    await companion.edit({ components: [] });
+  }
+
+  await db
+    .update(polls)
+    .set({ status: "completed" })
+    .where(eq(polls.pollMessageId, poll.pollMessageId));
 };
