@@ -3,6 +3,7 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { runSlotPicker } from "../flows/slotPicker.js";
+import { createPoll } from "../flows/pollManager.js";
 
 export const data = new SlashCommandBuilder()
   .setName("wanneer")
@@ -33,6 +34,5 @@ export async function execute(
   const selectedSlots = await runSlotPicker(interaction, group, game);
   if (!selectedSlots) return;
 
-  // createPoll will be added in Task 9
-  console.log("Selected slots:", selectedSlots);
+  await createPoll(interaction, group, game, selectedSlots);
 }
