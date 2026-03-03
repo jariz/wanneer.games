@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
 } from "discord.js";
+import { runSlotPicker } from "../flows/slotPicker.js";
 
 export const data = new SlashCommandBuilder()
   .setName("wanneer")
@@ -26,6 +27,12 @@ export const data = new SlashCommandBuilder()
 export async function execute(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
-  // implemented in Task 8
-  await interaction.reply({ content: "Bezig...", ephemeral: true });
+  const group = interaction.options.getString("group") ?? "kiwis";
+  const game = interaction.options.getString("game") ?? undefined;
+
+  const selectedSlots = await runSlotPicker(interaction, group, game);
+  if (!selectedSlots) return;
+
+  // createPoll will be added in Task 9
+  console.log("Selected slots:", selectedSlots);
 }
