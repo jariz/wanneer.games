@@ -52,7 +52,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (poll.companionMessageId) {
         const companion = await channel.messages.fetch(poll.companionMessageId);
-        await companion.edit({ content: "❌ Poll geannuleerd.", components: [] });
+        await companion.delete();
       }
 
       await channel.send(
