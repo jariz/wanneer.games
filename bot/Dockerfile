@@ -21,4 +21,4 @@ RUN mkdir -p /data
 ENV DATABASE_URL=/data/bot.db
 ENV NODE_ENV=production
 
-CMD ["./bot/node_modules/.bin/tsx", "bot/src/index.ts"]
+CMD ["./bot/node_modules/.bin/tsx", "--tsconfig", "./bot/tsconfig.json", "bot/src/index.ts"]
