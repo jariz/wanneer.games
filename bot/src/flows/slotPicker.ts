@@ -29,12 +29,13 @@ export const runSlotPicker = async (
   group: string,
   game: string | undefined
 ): Promise<Date[] | null> => {
+  await interaction.deferReply({ ephemeral: true });
+
   const slots = await fetchSlots(group);
 
   if (slots.length === 0) {
-    await interaction.reply({
+    await interaction.editReply({
       content: "❌ Geen beschikbare tijden gevonden in de komende 10 dagen.",
-      ephemeral: true,
     });
     return null;
   }
@@ -60,10 +61,9 @@ export const runSlotPicker = async (
   const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
   const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton);
 
-  const reply = await interaction.reply({
+  const reply = await interaction.editReply({
     content: "Selecteer de tijden die je in de poll wilt zetten:",
     components: [row1, row2],
-    ephemeral: true,
   });
 
   let selectedIndices: number[] = [];
