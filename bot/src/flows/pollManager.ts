@@ -62,7 +62,7 @@ export const createPoll = async (
   );
 
   const companionMessage = await channel.send({
-    content: "Poll loopt 24 uur. Eerder afsluiten?",
+    content: "\u200b",
     components: [row],
   });
 
