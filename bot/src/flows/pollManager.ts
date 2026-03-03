@@ -62,7 +62,7 @@ export const createPoll = async (
   );
 
   const companionMessage = await channel.send({
-    // content: "Poll loopt 24 uur. Eerder afsluiten?",
+    content: "Poll loopt 24 uur. Eerder afsluiten?",
     components: [row],
   });
 
@@ -120,16 +120,7 @@ export const finalizePoll = async (
   )) as Message<true>;
 
   if (reason === "manual") {
-    try {
-      await pollMessage.poll?.end();
-    } catch (err) {
-      console.error("Could not end poll via API (may have already expired):", err);
-    }
-    // Refetch to get final vote counts
-    const refreshed = (await channel.messages.fetch(
-      poll.pollMessageId,
-    )) as Message<true>;
-    return _processResults(poll, channel, refreshed);
+    return _processResults(poll, channel, pollMessage);
   }
 
   return _processResults(poll, channel, pollMessage);
