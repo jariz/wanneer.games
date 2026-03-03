@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-strip-types src/index.ts",
-    "start": "node --experimental-strip-types src/index.ts",
+    "dev": "node src/index.ts",
+    "start": "node src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {

@@ -23,4 +23,4 @@ RUN mkdir -p /data
 ENV DATABASE_URL=/data/bot.db
 ENV NODE_ENV=production
 
-CMD ["node", "--experimental-strip-types", "bot/src/index.ts"]
+CMD ["node", "bot/src/index.ts"]
