@@ -3,8 +3,8 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import path from "path";
 import { fileURLToPath } from "url";
-import { env } from "../env.js";
-import * as schema from "./schema.js";
+import { env } from "../env";
+import * as schema from "./schema";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

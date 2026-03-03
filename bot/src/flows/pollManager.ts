@@ -10,11 +10,11 @@ import {
 } from "discord.js";
 import { eq } from "drizzle-orm";
 import { toZonedTime } from "date-fns-tz";
-import { db } from "../db/index.js";
-import { polls } from "../db/schema.js";
-import { formatSlot } from "./slotPicker.js";
-import createBooking from "@/lib/createBooking.js";
-import { env } from "../env.js";
+import { db } from "../db/index";
+import { polls } from "../db/schema";
+import { formatSlot } from "./slotPicker";
+import createBooking from "@/lib/createBooking";
+import { env } from "../env";
 
 const POLL_DURATION_HOURS = 24;
 
@@ -27,12 +27,12 @@ export const createPoll = async (
   interaction: ChatInputCommandInteraction,
   group: string,
   game: string | undefined,
-  selectedSlots: Date[]
+  selectedSlots: Date[],
 ): Promise<void> => {
   const channel = interaction.channel as TextChannel;
 
   const groupEmoji = group === "kiwis" ? "🥝" : "🦔";
-  const gameLabel = game ? ` — ${game}` : "";
+  const gameLabel = game ? ` - ${game}` : "";
 
   const pollMessage = await channel.send({
     poll: {
@@ -41,7 +41,7 @@ export const createPoll = async (
         text: formatSlot(slot),
       })),
       duration: POLL_DURATION_HOURS,
-      allowMultiselect: false,
+      allowMultiselect: true,
       layoutType: PollLayoutType.Default,
     },
   });
@@ -58,7 +58,7 @@ export const createPoll = async (
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     finishButton,
-    cancelButton
+    cancelButton,
   );
 
   const companionMessage = await channel.send({
@@ -86,7 +86,7 @@ export const createPoll = async (
 
 export const schedulePollFinalization = (
   pollMessageId: string,
-  expiresAt: number
+  expiresAt: number,
 ): void => {
   const delay = expiresAt - Date.now();
   if (delay <= 0) return; // handled by startup recovery
@@ -95,7 +95,7 @@ export const schedulePollFinalization = (
 
 export const finalizePoll = async (
   pollMessageId: string,
-  reason: "expired" | "manual"
+  reason: "expired" | "manual",
 ): Promise<void> => {
   if (!botClient) {
     console.error("finalizePoll called before bot client was initialized");
@@ -110,15 +110,21 @@ export const finalizePoll = async (
 
   const channel = botClient.channels.cache.get(poll.channelId);
   if (!(channel instanceof TextChannel)) {
-    console.error(`Channel ${poll.channelId} is not a TextChannel or not found`);
+    console.error(
+      `Channel ${poll.channelId} is not a TextChannel or not found`,
+    );
     return;
   }
-  const pollMessage = await channel.messages.fetch(poll.pollMessageId) as Message<true>;
+  const pollMessage = (await channel.messages.fetch(
+    poll.pollMessageId,
+  )) as Message<true>;
 
   if (reason === "manual") {
     await pollMessage.poll?.end();
     // Refetch to get final vote counts after expiry
-    const refreshed = await channel.messages.fetch(poll.pollMessageId) as Message<true>;
+    const refreshed = (await channel.messages.fetch(
+      poll.pollMessageId,
+    )) as Message<true>;
     return _processResults(poll, channel, refreshed);
   }
 
@@ -128,7 +134,7 @@ export const finalizePoll = async (
 const _processResults = async (
   poll: typeof polls.$inferSelect,
   channel: TextChannel,
-  pollMessage: Message<true>
+  pollMessage: Message<true>,
 ): Promise<void> => {
   const slotIsos: string[] = JSON.parse(poll.slots);
   const answers = [...(pollMessage.poll?.answers.values() ?? [])];
@@ -170,7 +176,7 @@ const _processResults = async (
   });
 
   await channel.send(
-    `✅ Ingepland! **${formattedDate}**${poll.game ? ` — ${poll.game}` : ""}`
+    `✅ Ingepland! **${formattedDate}**${poll.game ? ` - ${poll.game}` : ""}`,
   );
 
   // Disable companion message buttons

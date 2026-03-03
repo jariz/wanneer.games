@@ -1,10 +1,10 @@
-import { Client, Events, GatewayIntentBits, Message, TextChannel } from "discord.js";
+import { Client, Events, GatewayIntentBits, Message, REST, Routes, TextChannel } from "discord.js";
 import { eq } from "drizzle-orm";
-import { env } from "./env.js";
-import { runMigrations, db } from "./db/index.js";
-import { polls } from "./db/schema.js";
-import { execute } from "./commands/wanneer.js";
-import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager.js";
+import { env } from "./env";
+import { runMigrations, db } from "./db/index";
+import { polls } from "./db/schema";
+import { data as wanneerData, execute } from "./commands/wanneer";
+import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -80,6 +80,13 @@ const recoverPolls = async () => {
 client.once("ready", async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
   setBotClient(c);
+
+  const rest = new REST().setToken(env.DISCORD_TOKEN);
+  await rest.put(Routes.applicationCommands(env.DISCORD_CLIENT_ID), {
+    body: [wanneerData.toJSON()],
+  });
+  console.log("Slash commands registered.");
+
   await recoverPolls();
 });
 

@@ -8,7 +8,7 @@ import {
   StringSelectMenuInteraction,
 } from "discord.js";
 import { toZonedTime } from "date-fns-tz";
-import fetchSlots from "@/lib/fetchSlots.js";
+import fetchSlots from "@/lib/fetchSlots";
 
 const TIMEZONE = "Europe/Amsterdam";
 
