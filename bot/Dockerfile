@@ -13,6 +13,8 @@ RUN cd bot && npm ci --omit=dev
 # Copy shared source files (Cal.com utilities, event type map)
 COPY src/lib/ ./src/lib/
 COPY src/const/ ./src/const/
+# Mark shared src files as ESM so tsx doesn't load them as CJS
+RUN echo '{"type":"module"}' > ./src/package.json
 
 # Copy bot source and migration files
 COPY bot/src/ ./bot/src/
