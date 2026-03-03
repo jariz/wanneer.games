@@ -4,7 +4,7 @@ import { env } from "./env.js";
 import { runMigrations, db } from "./db/index.js";
 import { polls } from "./db/schema.js";
 import { execute } from "./commands/wanneer.js";
-import { finalizePoll, setBotClient } from "./flows/pollManager.js";
+import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager.js";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -58,9 +58,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.once("ready", (c) => {
+const recoverPolls = async () => {
+  const activePolls = await db.query.polls.findMany({
+    where: eq(polls.status, "active"),
+  });
+
+  const now = Date.now();
+
+  for (const poll of activePolls) {
+    if (poll.expiresAt <= now) {
+      console.log(`Recovering expired poll ${poll.pollMessageId}`);
+      await finalizePoll(poll.pollMessageId, "expired").catch(console.error);
+    } else {
+      console.log(`Rescheduling poll ${poll.pollMessageId}`);
+      schedulePollFinalization(poll.pollMessageId, poll.expiresAt);
+    }
+  }
+};
+
+client.once("ready", async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
   setBotClient(c);
+  await recoverPolls();
 });
 
 client.login(env.DISCORD_TOKEN);
