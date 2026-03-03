@@ -1,4 +1,4 @@
-import eventTypeMap from "./eventTypeMap";
+import eventTypeMap from "./eventTypeMap.ts";
 
 interface CreateBookingParams {
   group: string;
