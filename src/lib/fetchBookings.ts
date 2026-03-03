@@ -1,5 +1,6 @@
 "use server";
 
+import { env } from "@/env";
 import eventTypeMap from "@/const/eventTypeMap";
 import { isAfter, startOfDay } from "date-fns";
 
@@ -20,7 +21,7 @@ const fetchBookings = async (removePastBookings: boolean, group: string) => {
     next: { tags: ["bookings"], revalidate: 600 },
     method: "GET",
     headers: {
-      Authorization: process.env.NEXT_CAL_API_KEY as string,
+      Authorization: env.NEXT_CAL_API_KEY,
       "Cal-Api-Version": "2024-08-13",
     },
   });

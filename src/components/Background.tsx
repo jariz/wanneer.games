@@ -1,4 +1,5 @@
 import BackgroundSlider from "./BackgroundSlider";
+import { env } from "@/env";
 
 interface AuthResponse {
   access_token: string;
@@ -7,10 +8,10 @@ interface AuthResponse {
 }
 const fetchBackgrounds = async () => {
   console.log(
-    `https://id.twitch.tv/oauth2/token?client_id=${process.env.NEXT_TWITCH_CLIENT_ID}&client_secret=${process.env.NEXT_TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
+    `https://id.twitch.tv/oauth2/token?client_id=${env.NEXT_TWITCH_CLIENT_ID}&client_secret=${env.NEXT_TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
   );
   const authResponse = await fetch(
-    `https://id.twitch.tv/oauth2/token?client_id=${process.env.NEXT_TWITCH_CLIENT_ID}&client_secret=${process.env.NEXT_TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
+    `https://id.twitch.tv/oauth2/token?client_id=${env.NEXT_TWITCH_CLIENT_ID}&client_secret=${env.NEXT_TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
     {
       method: "POST",
     },
@@ -39,7 +40,7 @@ const getArtworkUrls = async (gameIds: string[], accessToken: string) => {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Client-ID": process.env.NEXT_TWITCH_CLIENT_ID as string,
+      "Client-ID": env.NEXT_TWITCH_CLIENT_ID,
       Authorization: `Bearer ${accessToken}`,
     },
     body: `fields id, game, url; sort popularity desc; limit 50; where game = (${gameIds.join(",")});`,
@@ -57,7 +58,7 @@ const getArtworkUrls = async (gameIds: string[], accessToken: string) => {
 //       method: "POST",
 //       headers: {
 //         Accept: "application/json",
-//         "Client-ID": process.env.NEXT_TWITCH_CLIENT_ID as string,
+//         "Client-ID": env.NEXT_TWITCH_CLIENT_ID,
 //         Authorization: `Bearer ${accessToken}`,
 //       },
 //       body: "fields game_id,value,popularity_type; sort value desc; limit 10; where popularity_type = 1;",
