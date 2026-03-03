@@ -97,13 +97,22 @@ export const finalizePoll = async (
   pollMessageId: string,
   reason: "expired" | "manual"
 ): Promise<void> => {
+  if (!botClient) {
+    console.error("finalizePoll called before bot client was initialized");
+    return;
+  }
+
   const poll = await db.query.polls.findFirst({
     where: eq(polls.pollMessageId, pollMessageId),
   });
 
   if (!poll || poll.status !== "active") return;
 
-  const channel = botClient.channels.cache.get(poll.channelId) as TextChannel;
+  const channel = botClient.channels.cache.get(poll.channelId);
+  if (!(channel instanceof TextChannel)) {
+    console.error(`Channel ${poll.channelId} is not a TextChannel or not found`);
+    return;
+  }
   const pollMessage = await channel.messages.fetch(poll.pollMessageId) as Message<true>;
 
   if (reason === "manual") {

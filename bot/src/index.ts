@@ -37,7 +37,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
       if (!poll || poll.status !== "active") return;
 
-      const channel = interaction.channel as TextChannel;
+      const channel = interaction.channel;
+      if (!(channel instanceof TextChannel)) return;
       const pollMessage = await channel.messages.fetch(pollMessageId) as Message<true>;
       await pollMessage.poll?.end();
 
