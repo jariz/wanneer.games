@@ -7,14 +7,12 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
 } from "discord.js";
-import { toZonedTime } from "date-fns-tz";
 import fetchSlots from "../../../shared/fetchSlots.ts";
 
 const TIMEZONE = "Europe/Amsterdam";
 
-export const formatSlot = (date: Date): string => {
-  const zoned = toZonedTime(date, TIMEZONE);
-  return zoned.toLocaleDateString("nl-NL", {
+export const formatSlot = (date: Date): string =>
+  date.toLocaleDateString("nl-NL", {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -22,43 +20,58 @@ export const formatSlot = (date: Date): string => {
     minute: "2-digit",
     timeZone: TIMEZONE,
   });
-};
 
 const buildComponents = (
-  remaining: Date[],
-  selected: Date[],
-  originalIndices: number[],
+  remainingIndices: number[],
+  selectedIndices: number[],
+  slots: Date[],
 ) => {
+  const rows: ActionRowBuilder<StringSelectMenuBuilder | ButtonBuilder>[] = [];
+
+  if (remainingIndices.length > 0) {
+    const addSelect = new StringSelectMenuBuilder()
+      .setCustomId("slot_add")
+      .setPlaceholder("Voeg tijden toe...")
+      .setMinValues(1)
+      .setMaxValues(Math.min(10, remainingIndices.length))
+      .addOptions(
+        remainingIndices.slice(0, 25).map((i) => ({
+          label: formatSlot(slots[i]),
+          value: String(i),
+        }))
+      );
+    rows.push(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(addSelect));
+  }
+
+  if (selectedIndices.length > 0) {
+    const removeSelect = new StringSelectMenuBuilder()
+      .setCustomId("slot_remove")
+      .setPlaceholder("Verwijder een tijd...")
+      .setMinValues(1)
+      .setMaxValues(Math.min(10, selectedIndices.length))
+      .addOptions(
+        selectedIndices.map((i) => ({
+          label: formatSlot(slots[i]),
+          value: String(i),
+        }))
+      );
+    rows.push(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(removeSelect));
+  }
+
   const confirmButton = new ButtonBuilder()
     .setCustomId("slot_confirm")
     .setLabel("Maak poll")
     .setStyle(ButtonStyle.Primary)
-    .setDisabled(selected.length === 0);
+    .setDisabled(selectedIndices.length === 0);
+  rows.push(new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton));
 
-  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton);
-
-  if (remaining.length === 0) return [row2];
-
-  const select = new StringSelectMenuBuilder()
-    .setCustomId("slot_select")
-    .setPlaceholder("Voeg tijden toe aan de poll...")
-    .setMinValues(1)
-    .setMaxValues(Math.min(10, remaining.length))
-    .addOptions(
-      remaining.slice(0, 25).map((slot, i) => ({
-        label: formatSlot(slot),
-        value: String(originalIndices[i]),
-      }))
-    );
-
-  const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
-  return [row1, row2];
+  return rows;
 };
 
-const buildContent = (selected: Date[]) => {
-  if (selected.length === 0) return "Selecteer de tijden die je in de poll wilt zetten:";
-  const list = selected.map((s) => `• ${formatSlot(s)}`).join("\n");
-  return `**Geselecteerd:**\n${list}\n\nVoeg meer toe of bevestig:`;
+const buildContent = (selectedIndices: number[], slots: Date[]) => {
+  if (selectedIndices.length === 0) return "Selecteer de tijden die je in de poll wilt zetten:";
+  const list = selectedIndices.map((i) => `• ${formatSlot(slots[i])}`).join("\n");
+  return `**Geselecteerd:**\n${list}\n\nVoeg meer toe, verwijder, of bevestig:`;
 };
 
 export const runSlotPicker = async (
@@ -77,14 +90,13 @@ export const runSlotPicker = async (
     return null;
   }
 
-  // Track which original indices are still available
-  let remainingIndices = slots.slice(0, 25).map((_, i) => i);
-  let remainingSlots = slots.slice(0, 25);
-  let selectedSlots: Date[] = [];
+  const allSlots = slots.slice(0, 25);
+  let remainingIndices = allSlots.map((_, i) => i);
+  let selectedIndices: number[] = [];
 
   const reply = await interaction.editReply({
-    content: buildContent(selectedSlots),
-    components: buildComponents(remainingSlots, selectedSlots, remainingIndices),
+    content: buildContent(selectedIndices, allSlots),
+    components: buildComponents(remainingIndices, selectedIndices, allSlots),
   });
 
   const collector = reply.createMessageComponentCollector({
@@ -93,16 +105,19 @@ export const runSlotPicker = async (
   });
 
   collector.on("collect", async (selectInteraction: StringSelectMenuInteraction) => {
-    const pickedOriginalIndices = selectInteraction.values.map(Number);
-    const pickedSlots = pickedOriginalIndices.map((i) => slots[i]);
+    const values = selectInteraction.values.map(Number);
 
-    selectedSlots = [...selectedSlots, ...pickedSlots];
-    remainingIndices = remainingIndices.filter((i) => !pickedOriginalIndices.includes(i));
-    remainingSlots = remainingIndices.map((i) => slots[i]);
+    if (selectInteraction.customId === "slot_add") {
+      selectedIndices = [...selectedIndices, ...values].sort((a, b) => a - b);
+      remainingIndices = remainingIndices.filter((i) => !values.includes(i));
+    } else if (selectInteraction.customId === "slot_remove") {
+      remainingIndices = [...remainingIndices, ...values].sort((a, b) => a - b);
+      selectedIndices = selectedIndices.filter((i) => !values.includes(i));
+    }
 
     await selectInteraction.update({
-      content: buildContent(selectedSlots),
-      components: buildComponents(remainingSlots, selectedSlots, remainingIndices),
+      content: buildContent(selectedIndices, allSlots),
+      components: buildComponents(remainingIndices, selectedIndices, allSlots),
     });
   });
 
@@ -120,7 +135,7 @@ export const runSlotPicker = async (
       components: [],
     });
 
-    return selectedSlots;
+    return selectedIndices.map((i) => allSlots[i]);
   } catch {
     await interaction.editReply({
       content: "⏱️ Timeout — probeer opnieuw met /wanneer.",
