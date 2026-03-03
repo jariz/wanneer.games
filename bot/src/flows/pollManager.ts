@@ -179,10 +179,9 @@ const _processResults = async (
     `✅ Ingepland! **${formattedDate}**${poll.game ? ` - ${poll.game}` : ""}`,
   );
 
-  // Disable companion message buttons
   if (poll.companionMessageId) {
     const companion = await channel.messages.fetch(poll.companionMessageId);
-    await companion.edit({ components: [] });
+    await companion.delete();
   }
 
   await db
