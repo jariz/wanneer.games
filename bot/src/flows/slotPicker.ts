@@ -85,8 +85,7 @@ const buildComponents = (
       const timeSelect = new StringSelectMenuBuilder()
         .setCustomId("slot_add")
         .setPlaceholder("Voeg tijden toe...")
-        .setMinValues(1)
-        .setMaxValues(1)
+
         .addOptions(
           remainingInDay.map((i) => ({
             label: formatTime(allSlots[i]),
