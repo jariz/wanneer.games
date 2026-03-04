@@ -13,11 +13,12 @@ const getEmoji = (group: string) => {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { group: string } },
+  { params }: { params: Promise<{ group: string }> },
 ) {
   try {
+    const { group } = await params;
     // Fetch bookings from Cal.com API
-    const bookings = await fetchBookings(false, params.group);
+    const bookings = await fetchBookings(false, group);
 
     // Map bookings to iCalendar event format
     const events = bookings.map(
@@ -31,7 +32,7 @@ export async function GET(
         ],
         startInputType: "utc",
         duration: { hours: 3 },
-        title: `${getEmoji(params.group)} Gaming sessie: ${booking.game ?? "onbekend"}`,
+        title: `${getEmoji(group)} Gaming sessie: ${booking.game ?? "onbekend"}`,
         organizer: { name: "wanneer.games", email: "jarizw+wanneer@gmail.com" },
       }),
     );

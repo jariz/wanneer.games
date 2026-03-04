@@ -7,6 +7,7 @@ const Confetti = () => {
   const { width, height } = useWindowSize()
   const [shouldRender, setShouldRender] = React.useState(false)
   console.log(width, height)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setShouldRender(true), [])
   return shouldRender && (
     <ReactConfetti

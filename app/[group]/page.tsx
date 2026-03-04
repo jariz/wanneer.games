@@ -30,10 +30,11 @@ const formatDateWithRelative = (date: Date, now: Date) => {
 export const revalidate = 60;
 
 export default async function Component({
-  params: { group },
+  params,
 }: {
-  params: { group: string };
+  params: Promise<{ group: string }>;
 }) {
+  const { group } = await params;
   const bookings = await fetchBookings(true, group as string);
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
