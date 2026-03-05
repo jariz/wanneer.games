@@ -61,7 +61,7 @@ export const createPoll = async (
   );
 
   await interaction.followUp({
-    content: "\u200b",
+    content: "📊 Poll is gestart!",
     components: [row],
     ephemeral: true,
   });
