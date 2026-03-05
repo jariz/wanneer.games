@@ -60,9 +60,10 @@ export const createPoll = async (
     cancelButton,
   );
 
-  const companionMessage = await channel.send({
+  await interaction.followUp({
     content: "\u200b",
     components: [row],
+    ephemeral: true,
   });
 
   const now = Date.now();
@@ -70,7 +71,6 @@ export const createPoll = async (
 
   await db.insert(polls).values({
     pollMessageId: pollMessage.id,
-    companionMessageId: companionMessage.id,
     channelId: channel.id,
     group,
     game: game ?? null,
@@ -176,11 +176,6 @@ const _processResults = async (
   await channel.send(
     `✅ Ingepland! **${formattedDate}**${poll.game ? ` - ${poll.game}` : ""}`,
   );
-
-  if (poll.companionMessageId) {
-    const companion = await channel.messages.fetch(poll.companionMessageId);
-    await companion.delete();
-  }
 
   await db
     .update(polls)

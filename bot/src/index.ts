@@ -29,17 +29,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (!pollMessageId) return;
 
     if (action === "poll_finish") {
-      await interaction.deferUpdate();
+      await interaction.update({
+        content: "⏳ Poll wordt afgerond...",
+        components: [],
+      });
       await finalizePoll(pollMessageId, "manual").catch(console.error);
       return;
     }
 
     if (action === "poll_cancel") {
-      await interaction.deferUpdate();
       const poll = await db.query.polls.findFirst({
         where: eq(polls.pollMessageId, pollMessageId),
       });
       if (!poll || poll.status !== "active") return;
+
+      await interaction.update({
+        content: "❌ Poll geannuleerd.",
+        components: [],
+      });
 
       const channel = interaction.channel;
       if (!(channel instanceof TextChannel)) return;
@@ -49,11 +56,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .update(polls)
         .set({ status: "cancelled" })
         .where(eq(polls.pollMessageId, pollMessageId));
-
-      if (poll.companionMessageId) {
-        const companion = await channel.messages.fetch(poll.companionMessageId);
-        await companion.delete();
-      }
 
       await channel.send(
         "❌ Poll geannuleerd. Gebruik /wanneer om een nieuwe poll te starten."
