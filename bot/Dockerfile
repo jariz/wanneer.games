@@ -5,13 +5,15 @@ WORKDIR /app
 # Build tools required for better-sqlite3 native addon
 RUN apk add --no-cache python3 make g++
 
-# Install root dependencies (shared by shared/ files)
-COPY package*.json ./
-RUN npm ci --omit=dev
+RUN corepack enable
 
-# Install bot dependencies (compiles better-sqlite3)
-COPY bot/package*.json ./bot/
-RUN cd bot && npm ci --omit=dev
+# Copy workspace configuration and all package.json files
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY bot/package.json ./bot/
+COPY shared/package.json ./shared/
+
+# Single pnpm install for all workspaces
+RUN pnpm install --frozen-lockfile --prod
 
 FROM node:24-alpine
 

@@ -12,7 +12,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { polls } from "../db/schema.ts";
 import { formatSlot } from "./slotPicker.ts";
-import createBooking from "../../../shared/createBooking.ts";
+import createBooking from "shared/createBooking";
 import { env } from "../env.ts";
 
 const POLL_DURATION_HOURS = 24;

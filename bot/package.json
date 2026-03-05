@@ -15,6 +15,7 @@
     "date-fns-tz": "^3.2.0",
     "discord.js": "^14.16.0",
     "drizzle-orm": "^0.38.0",
+    "shared": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
 } from "discord.js";
-import fetchSlots from "../../../shared/fetchSlots.ts";
+import fetchSlots from "shared/fetchSlots";
 
 const TIMEZONE = "Europe/Amsterdam";
 
