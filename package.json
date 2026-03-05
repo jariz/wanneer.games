@@ -2,6 +2,7 @@
   "name": "wanneer.games",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "TZ=UTC next dev",
     "build": "next build",
@@ -28,6 +29,7 @@
     "react-use": "^17.5.1",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
+    "shared": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {
