@@ -60,10 +60,9 @@ export const createPoll = async (
     cancelButton,
   );
 
-  await interaction.followUp({
+  await interaction.editReply({
     content: "📊 Poll is gestart!",
     components: [row],
-    ephemeral: true,
   });
 
   const now = Date.now();
