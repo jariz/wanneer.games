@@ -1,12 +1,12 @@
 # wanneer.games
 
-**Wanneer is de volgende game-sessie?** Deze site beantwoordt die vraag voor twee Nederlandse gamegroepen (Kiwis & Niglos).
+**Wanneer is de volgende game-sessie?** Deze site beantwoordt die vraag voor twee vriendengroepen (Kiwis & Niglos).
 
 ## Wat doet het?
 
 - Toont de eerstvolgende en aankomende sessies
 - Laat je nieuwe sessies inplannen via [Cal.com](https://cal.com)
-- Biedt een `.ics` kalenderbestand om sessies te exporteren
+- Biedt een `.ics` feed aan om te koppelen aan bv. Google Calendar
 - Bevat een Discord-bot voor sessie-notificaties
 
 ## Ontwikkelen
