@@ -34,7 +34,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
         components: [],
       });
       try {
-        await finalizePoll(pollMessageId, "manual");
+        const result = await finalizePoll(pollMessageId, "manual");
+        if (result?.noVotes) {
+          await interaction.editReply({
+            content: "❌ Kan poll niet afronden: er zijn nog geen stemmen uitgebracht.",
+          });
+          return;
+        }
         await interaction.editReply({
           content: "✅ Poll is afgerond.",
         });

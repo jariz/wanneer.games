@@ -94,7 +94,7 @@ export const schedulePollFinalization = (
 export const finalizePoll = async (
   pollMessageId: string,
   reason: "expired" | "manual",
-): Promise<void> => {
+): Promise<{ noVotes?: boolean } | void> => {
   if (!botClient) {
     console.error("finalizePoll called before bot client was initialized");
     return;
@@ -118,6 +118,16 @@ export const finalizePoll = async (
   )) as Message<true>;
 
   if (reason === "manual") {
+    // Check vote counts before ending the poll
+    const answers = [...(pollMessage.poll?.answers.values() ?? [])];
+    const totalVotes = answers.reduce(
+      (sum, a) => sum + (a.voteCount ?? 0),
+      0,
+    );
+    if (totalVotes <= 0) {
+      return { noVotes: true };
+    }
+
     await pollMessage.poll?.end();
     // Refetch to get final vote counts after ending
     const refreshed = (await channel.messages.fetch(
@@ -126,14 +136,23 @@ export const finalizePoll = async (
     return _processResults(poll, channel, refreshed);
   }
 
-  return _processResults(poll, channel, pollMessage);
+  const result = await _processResults(poll, channel, pollMessage);
+  if (result?.noVotes) {
+    await channel.send(
+      "❌ Poll verlopen zonder stemmen. Gebruik /wanneer om een nieuwe poll te starten.",
+    );
+    await db
+      .update(polls)
+      .set({ status: "cancelled" })
+      .where(eq(polls.pollMessageId, poll.pollMessageId));
+  }
 };
 
 const _processResults = async (
   poll: typeof polls.$inferSelect,
   channel: TextChannel,
   pollMessage: Message<true>,
-): Promise<void> => {
+): Promise<{ noVotes?: boolean }> => {
   const slotIsos: string[] = JSON.parse(poll.slots);
   const answers = [...(pollMessage.poll?.answers.values() ?? [])];
 
@@ -145,6 +164,10 @@ const _processResults = async (
       maxVotes = answers[i].voteCount ?? 0;
       winnerIndex = i;
     }
+  }
+
+  if (maxVotes <= 0) {
+    return { noVotes: true };
   }
 
   const winningSlot = new Date(slotIsos[winnerIndex]);
@@ -160,7 +183,7 @@ const _processResults = async (
   } catch (err) {
     console.error("Failed to create booking:", err);
     await channel.send(`❌ Kon sessie niet inplannen: ${String(err)}`);
-    return;
+    return {};
   }
 
   const formattedDate = winningSlot.toLocaleDateString("nl-NL", {
@@ -180,4 +203,6 @@ const _processResults = async (
     .update(polls)
     .set({ status: "completed" })
     .where(eq(polls.pollMessageId, poll.pollMessageId));
+
+  return {};
 };
