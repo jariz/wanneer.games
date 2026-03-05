@@ -33,7 +33,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
         content: "⏳ Poll wordt afgerond...",
         components: [],
       });
-      await finalizePoll(pollMessageId, "manual").catch(console.error);
+      try {
+        await finalizePoll(pollMessageId, "manual");
+        await interaction.editReply({
+          content: "✅ Poll is afgerond.",
+        });
+      } catch (err) {
+        console.error(err);
+        await interaction.editReply({
+          content: "❌ Poll kon niet worden afgerond.",
+        });
+      }
       return;
     }
 
