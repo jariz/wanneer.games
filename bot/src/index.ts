@@ -54,22 +54,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
       if (!poll || poll.status !== "active") return;
 
       await interaction.update({
-        content: "❌ Poll geannuleerd.",
+        content: "⏳ Poll wordt geannuleerd...",
         components: [],
       });
 
-      const channel = interaction.channel;
-      if (!(channel instanceof TextChannel)) return;
-      const pollMessage = await channel.messages.fetch(pollMessageId) as Message<true>;
-      await pollMessage.poll?.end();
-      await db
-        .update(polls)
-        .set({ status: "cancelled" })
-        .where(eq(polls.pollMessageId, pollMessageId));
+      try {
+        const channel = interaction.channel;
+        if (!(channel instanceof TextChannel)) throw new Error("Channel is not a TextChannel or not found");
+        const pollMessage = await channel.messages.fetch(pollMessageId) as Message<true>;
+        await pollMessage.poll?.end();
+        await db
+          .update(polls)
+          .set({ status: "cancelled" })
+          .where(eq(polls.pollMessageId, pollMessageId));
 
-      await channel.send(
-        "❌ Poll geannuleerd. Gebruik /wanneer om een nieuwe poll te starten."
-      );
+        await interaction.editReply({
+          content: "❌ Poll geannuleerd.",
+        });
+
+        await channel.send(
+          "❌ Poll geannuleerd. Gebruik /wanneer om een nieuwe poll te starten."
+        );
+      } catch (err) {
+        console.error(err);
+        await interaction.editReply({
+          content: "❌ Poll kon niet worden geannuleerd.",
+        });
+      }
     }
   }
 });
