@@ -7,7 +7,7 @@
 - Toont de eerstvolgende en aankomende sessies
 - Laat je nieuwe sessies inplannen via [Cal.com](https://cal.com)
 - Biedt een `.ics` feed aan om te koppelen aan bv. Google Calendar
-- Bevat een Discord-bot voor sessie-notificaties
+- Bevat een Discord-bot voor polls en het plannen van nieuwe sessies
 
 ## Ontwikkelen
 
