@@ -1,7 +1,7 @@
 "use server";
 
 import { env } from "@/env";
-import eventTypeMap from "shared/eventTypeMap";
+import eventTypeMap from "@/shared/eventTypeMap";
 import { isAfter, startOfDay } from "date-fns";
 
 interface BookingResponse {

@@ -1,10 +1,1 @@
-{
-  "name": "shared",
-  "private": true,
-  "type": "module",
-  "exports": {
-    "./eventTypeMap": "./eventTypeMap.ts",
-    "./createBooking": "./createBooking.ts",
-    "./fetchSlots": "./fetchSlots.ts"
-  }
-}
+{"type":"module"}
