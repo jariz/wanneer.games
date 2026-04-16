@@ -166,6 +166,7 @@ export const runSlotPicker = async (
     } else if (selectInteraction.customId === "slot_add") {
       const values = selectInteraction.values.map(Number);
       selectedIndices = [...selectedIndices, ...values].sort((a, b) => a - b);
+      currentDayKey = null;
     } else if (selectInteraction.customId === "slot_remove") {
       const values = selectInteraction.values.map(Number);
       selectedIndices = selectedIndices.filter((i) => !values.includes(i));
