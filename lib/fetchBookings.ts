@@ -15,22 +15,43 @@ interface BookingResponse {
 }
 
 const fetchBookings = async (removePastBookings: boolean, group: string) => {
-  const url = `https://api.cal.com/v2/bookings?status=upcoming&status=past&take=100&eventTypeId=${eventTypeMap[group]}`;
-  console.log(url);
-  const response = await fetch(url, {
-    next: { tags: ["bookings"], revalidate: 600 },
-    method: "GET",
-    headers: {
-      Authorization: env.NEXT_CAL_API_KEY,
-      "Cal-Api-Version": "2024-08-13",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch bookings: ${response.statusText}`);
-  }
-  const body: BookingResponse = await response.json();
-  console.log(body)
-  const bookings = body.data
+  const fetchStatus = async (status: "upcoming" | "past") => {
+    const data: BookingResponse["data"] = [];
+    const take = 100;
+    let skip = 0;
+
+    while (true) {
+      const params = new URLSearchParams({
+        status,
+        take: String(take),
+        skip: String(skip),
+        eventTypeId: String(eventTypeMap[group]),
+      });
+      // Keep today's already-started sessions visible without loading all history.
+      if (removePastBookings) {
+        params.set("afterStart", startOfDay(new Date()).toISOString());
+      }
+      const response = await fetch(`https://api.cal.com/v2/bookings?${params}`, {
+        next: { tags: ["bookings"], revalidate: 600 },
+        headers: {
+          Authorization: env.NEXT_CAL_API_KEY,
+          "Cal-Api-Version": "2024-08-13",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
+      }
+      const body: BookingResponse = await response.json();
+      data.push(...body.data);
+      if (body.data.length < take) break;
+      skip += take;
+    }
+    return data;
+  };
+
+  // Fetch statuses separately: past sessions must never crowd out upcoming ones.
+  const pages = await Promise.all([fetchStatus("upcoming"), fetchStatus("past")]);
+  const bookings = pages.flat()
     .map((booking) => ({
       game: booking.bookingFieldsResponses.game,
       date: new Date(booking.start),
