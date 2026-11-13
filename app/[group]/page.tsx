@@ -35,7 +35,7 @@ export default async function Component({
   params: Promise<{ group: string }>;
 }) {
   const { group } = await params;
-  const bookings = await fetchBookings(true, group as string);
+  const bookings = await fetchBookings(group);
   const nextSession = bookings[0];
   const futureSessions = bookings.splice(1);
   const zonedNow = toZonedTime(new Date(), "Europe/Amsterdam");

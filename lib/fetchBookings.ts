@@ -2,7 +2,8 @@
 
 import { env } from "@/env";
 import eventTypeMap from "@/shared/eventTypeMap";
-import { isAfter, startOfDay } from "date-fns";
+import { addMonths, startOfDay } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 interface BookingResponse {
   data: Array<{
@@ -14,7 +15,11 @@ interface BookingResponse {
   }>;
 }
 
-const fetchBookings = async (removePastBookings: boolean, group: string) => {
+const fetchBookings = async (group: string) => {
+  const timeZone = "Europe/Amsterdam";
+  const today = startOfDay(toZonedTime(new Date(), timeZone));
+  const afterStart = fromZonedTime(today, timeZone).toISOString();
+  const beforeEnd = fromZonedTime(addMonths(today, 1), timeZone).toISOString();
   const fetchStatus = async (status: "upcoming" | "past") => {
     const data: BookingResponse["data"] = [];
     const take = 100;
@@ -26,11 +31,9 @@ const fetchBookings = async (removePastBookings: boolean, group: string) => {
         take: String(take),
         skip: String(skip),
         eventTypeId: String(eventTypeMap[group]),
+        afterStart,
+        beforeEnd,
       });
-      // Keep today's already-started sessions visible without loading all history.
-      if (removePastBookings) {
-        params.set("afterStart", startOfDay(new Date()).toISOString());
-      }
       const response = await fetch(`https://api.cal.com/v2/bookings?${params}`, {
         next: { tags: ["bookings"], revalidate: 600 },
         headers: {
@@ -57,10 +60,6 @@ const fetchBookings = async (removePastBookings: boolean, group: string) => {
       date: new Date(booking.start),
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
-  return removePastBookings
-    ? bookings.filter((booking) =>
-        isAfter(booking.date, startOfDay(new Date())),
-      )
-    : bookings;
+  return bookings;
 };
 export default fetchBookings;
