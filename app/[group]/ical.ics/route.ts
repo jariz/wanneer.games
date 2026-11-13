@@ -18,7 +18,7 @@ export async function GET(
   try {
     const { group } = await params;
     // Fetch bookings from Cal.com API
-    const bookings = await fetchBookings(group);
+    const bookings = await fetchBookings(group, true);
 
     // Map bookings to iCalendar event format
     const events = bookings.map(

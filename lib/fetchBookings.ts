@@ -15,7 +15,7 @@ interface BookingResponse {
   }>;
 }
 
-const fetchBookings = async (group: string) => {
+const fetchBookings = async (group: string, allBookings = false) => {
   const timeZone = "Europe/Amsterdam";
   const today = startOfDay(toZonedTime(new Date(), timeZone));
   const afterStart = fromZonedTime(today, timeZone).toISOString();
@@ -31,9 +31,11 @@ const fetchBookings = async (group: string) => {
         take: String(take),
         skip: String(skip),
         eventTypeId: String(eventTypeMap[group]),
-        afterStart,
-        beforeEnd,
       });
+      if (!allBookings) {
+        params.set("afterStart", afterStart);
+        params.set("beforeEnd", beforeEnd);
+      }
       const response = await fetch(`https://api.cal.com/v2/bookings?${params}`, {
         next: { tags: ["bookings"], revalidate: 600 },
         headers: {
