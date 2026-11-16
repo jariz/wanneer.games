@@ -37,17 +37,38 @@ const rotation = [
   3225, // No Man's Sky
   119171, // Baldur's Gate III
   9730, // Firewatch
+  1877, // Cyberpunk 2077
+  1942, // The Witcher 3: Wild Hunt
+  26472, // Disco Elysium
+  185246, // Alan Wake II
+  103329, // Control
+  225582, // Control Resonant
+  75235, // Ghost of Tsushima
+  9498, // Deus Ex: Mankind Divided
+  37001, // Ori and the Will of the Wisps
+  112874, // Horizon Forbidden West
 ];
-const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height;";
+const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height,screenshots.image_id,screenshots.width,screenshots.height;";
 
 type Artwork = { image_id: string; artwork_type?: number; width?: number; height?: number };
 
 // IGDB artwork types that work as a background: key art without logo, artwork, concept art, historical artwork.
 // Logos, icons and covers are left out.
 const backgroundTypes = [1, 2, 4, 15];
+const conceptArtOnly = new Set([1877, 1942]);
+const includeScreenshots = new Set([185246]); // Alan Wake II
+const additionalArtworks = new Map([
+  [1877, [
+    "ig0frvvkkz4jx7cyqt3f",
+    "pgrmxtckblxm3pfdu5hu",
+    "c6gonpyuhueh0eq38n8l",
+  ]],
+]);
 
 // Artworks IGDB types as plain art that still don't work as a background.
 const excludedArtworks = new Set([
+  "j7dbzjr8ddshnaewmb4d", // Ghost of Tsushima: duplicate composition
+  "ar3sed", // Horizon Forbidden West: duplicate composition
   "ar7s2", // Age of Empires IV: logo card
   "ar6i4l", "ar6i4m", "ar6i4n", // Grand Theft Auto VI: logo over the art
   "ar4rk", "ar4rl", "ar4rn", // Star Wars Battlefront II: logo over the art
@@ -60,16 +81,21 @@ const excludedArtworks = new Set([
   "ar3sas", "ar69b1", "ar3tfx", // Schedule I, Call of Duty: Black Ops 6, Baldur's Gate III: too dark
 ]);
 
-function backgroundArtworks(artworks: Artwork[] = []) {
-  return artworks
-    .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1) && !excludedArtworks.has(art.image_id))
+function backgroundArtworks(gameId: number, artworks: Artwork[] = [], screenshots: Artwork[] = []) {
+  const candidates = artworks
+    .filter((art) => !conceptArtOnly.has(gameId) || art.artwork_type === 4)
+    .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1));
+  if (includeScreenshots.has(gameId)) candidates.push(...screenshots);
+  const filtered = candidates
+    .filter((art) => !excludedArtworks.has(art.image_id))
     // IGDB's alpha_channel flag is set on plenty of opaque artwork, so only shape is checked: square or portrait images don't fill the hero.
     .filter((art) => (art.width ?? 16) / (art.height ?? 9) >= 1.3);
+  return [...filtered, ...(additionalArtworks.get(gameId) ?? []).map((image_id) => ({ image_id }))];
 }
 
 async function gameQuery(query: string): Promise<Game[]> {
   try {
-    const data = await igdbQuery<{ id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[] }>(
+    const data = await igdbQuery<{ id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: Artwork[] }>(
       `${fields} ${query}`,
       { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
       { init: { next: { revalidate: 3600 } } },
@@ -77,7 +103,7 @@ async function gameQuery(query: string): Promise<Game[]> {
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
     return data.map((game) => {
-      const artworks = [...new Set(backgroundArtworks(game.artworks).map((art) => image(art.image_id, "t_1080p")!))];
+      const artworks = [...new Set(backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => image(art.image_id, "t_1080p")!))];
       return {
         id: game.id,
         name: game.name,
