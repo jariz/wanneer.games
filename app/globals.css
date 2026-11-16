@@ -14,11 +14,9 @@
     --edge: 39 76 57;
     --control: 98 144 118;
     --ink: 238 245 240;
-    --quiet: 170 200 182;
+    --quiet: 198 217 205;
     --brand: 140 214 92;
     --radius: .5rem;
-    /* How much the WebGL glass leans towards the clan colour, 0 to 1. */
-    --glass-tint: 0.06;
   }
 
   /* :has() so the body background outside the app shell follows the clan too. */
@@ -30,14 +28,13 @@
     --edge: 84 62 45;
     --control: 156 124 96;
     --ink: 247 241 235;
-    --quiet: 210 190 172;
+    --quiet: 226 211 197;
     --brand: 240 168 92;
   }
 
   * { @apply border-edge; }
-  /* Rubber-band overscroll moves the page without reporting it, which detaches the WebGL glass from its panels. */
-  html { overscroll-behavior: none; }
   body { @apply m-0 bg-canvas font-sans text-ink; }
+  body { isolation: isolate; }
   button { @apply cursor-pointer; }
   button, a, input { -webkit-tap-highlight-color: transparent; }
   :focus-visible { @apply outline outline-2 outline-offset-4 outline-brand; }
@@ -45,6 +42,34 @@
 }
 
 @layer components {
+  .glass-control {
+    position: relative;
+    background-color: rgb(var(--surface) / .24);
+    background-image: linear-gradient(145deg, rgb(255 255 255 / .09), transparent 55%, rgb(255 255 255 / .025));
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    backdrop-filter: blur(8px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), inset 0 -1px 0 rgb(0 0 0 / .12), 0 3px 8px rgb(0 0 0 / .08);
+  }
+
+  .glass-control:is([data-selected], [data-checked]) {
+    background-color: rgb(var(--brand) / .95);
+    border-color: rgb(var(--brand));
+    color: rgb(var(--canvas));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), 0 0 0 1px rgb(var(--brand) / .35), 0 4px 12px rgb(0 0 0 / .18);
+  }
+
+  .glass-primary {
+    background-image: linear-gradient(165deg, rgb(255 255 255 / .22), transparent 55%, rgb(0 0 0 / .06));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .4), inset 0 -1px 0 rgb(0 0 0 / .12), 0 4px 12px rgb(0 0 0 / .15);
+  }
+
+  .glass-control[data-slot="calendar-day"]:is([data-disabled], [data-unavailable]) {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
   /* Frosted glass with a specular rim. Needs a positioned element for the rim. */
   .glass {
     background-color: rgb(var(--surface) / .42);
@@ -69,15 +94,52 @@
     mask-composite: exclude;
   }
 
-  /* With the WebGL backdrop running, it draws the frost and refraction under [data-lens] panels itself. */
-  :root[data-lens-active] .glass[data-lens] {
-    background-color: rgb(var(--surface) / .08);
+  .glass[data-lens="bar"] {
+    background-color: rgb(var(--canvas) / .65);
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
+    backdrop-filter: blur(6px) saturate(120%);
+  }
+
+  /* liquidGL supplies the material once its first frame is ready. */
+  :root[data-lens-active] [data-glass-rendered] {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
+  :root[data-lens-active] .glass[data-glass-rendered] {
+    background-color: transparent;
+    box-shadow: 0 8px 24px -12px rgb(0 0 0 / .35);
+  }
+
+  :root[data-lens-active] .glass[data-glass-rendered]::before {
+    display: none;
+  }
+
+  :root[data-lens-active] .glass-control[data-glass-rendered]:not([data-selected], [data-checked]) {
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+  }
+
+  /* liquidGL clears inline backgrounds; semantic selection stays a native fill. */
+  :root[data-lens-active] .glass-control[data-glass-rendered]:is([data-selected], [data-checked]) {
+    background: rgb(var(--brand)) !important;
+  }
+
+  :root[data-lens-active] :is(dialog, [popover])[data-glass-rendered] {
+    isolation: isolate;
+  }
+
+  :root[data-lens-active] .glass-control[data-glass-rendered]:is(button, a, [role="radio"], [role="tab"], :has(input)):is(:hover, :focus-within):not([data-selected], [data-checked], [data-disabled], [data-unavailable], :disabled) {
+    background-color: rgb(255 255 255 / .08) !important;
+  }
+
+  :root[data-lens-active] .glass[data-glass-rendered]:is(button, a):is(:hover, :focus-visible):not(:disabled, [data-disabled]) {
+    background-color: rgb(255 255 255 / .08) !important;
+  }
+
   @media (prefers-reduced-transparency: reduce) {
-    .glass {
+    .glass, .glass[data-lens="bar"], .glass-control {
       background-color: rgb(var(--surface));
       -webkit-backdrop-filter: none;
       backdrop-filter: none;

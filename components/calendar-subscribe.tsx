@@ -17,8 +17,8 @@ function CalendarOption({ icon, title, description, trailing, render, onClick }:
   render?: RenderProp; onClick?: () => void;
 }) {
   return (
-    <ButtonPrimitive className="flex items-center gap-3 rounded-lg border border-control p-3 text-left hover:bg-raised" render={render} onClick={onClick}>
-      <span className="grid size-8 place-items-center text-brand">{icon}</span>
+    <ButtonPrimitive className="glass-control flex items-center gap-3 rounded-lg border border-glass-edge p-3 text-left hover:bg-white/5" render={render} onClick={onClick}>
+      <IconTile className="mb-0 size-9 shrink-0 rounded-lg">{icon}</IconTile>
       <span className="text-xs">{title}<small className="mt-1 block text-[9px] text-quiet">{description}</small></span>
       <span className="ml-auto text-quiet">{trailing}</span>
     </ButtonPrimitive>
@@ -48,7 +48,7 @@ export default function CalendarSubscribe({ group, compact = false }: { group: C
       <DialogTrigger
         className={compact
           ? buttonVariants({ variant: "secondary" })
-          : "glass relative flex min-h-[240px] flex-col items-start overflow-hidden rounded-xl border border-white/[.08] p-6 text-left transition duration-300 hover:-translate-y-[3px] hover:bg-raised/30 phone:min-h-[278px]"}
+          : "glass relative flex min-h-[240px] flex-col items-start overflow-hidden rounded-xl border border-glass-edge p-6 text-left transition duration-300 hover:-translate-y-[3px] hover:bg-white/5 phone:min-h-[278px]"}
         aria-label={compact ? "Agenda koppelen" : "Koppel je agenda"}
         data-lens={compact ? undefined : ""}
       >

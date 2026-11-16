@@ -2,10 +2,10 @@ import type { ComponentProps } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const alertVariants = cva("rounded-md border text-[11px] leading-relaxed", {
+const alertVariants = cva("glass relative rounded-md border text-[11px] leading-relaxed", {
   variants: {
     variant: {
-      default: "border-control bg-raised p-3.5 text-quiet",
+      default: "border-glass-edge p-3.5 text-quiet",
       destructive: "border-orange-400/50 bg-orange-950/40 p-3 text-orange-200",
     },
   },

@@ -71,7 +71,7 @@ export default function SessionHero({ next, now }: { next: Session | undefined; 
             </>
           )}
         </div>
-        <div className="flex min-h-12 items-center justify-between gap-3 border-t border-control/40 pt-4 phone:gap-5 phone:pt-5">
+        <div className="flex min-h-12 items-center justify-between gap-3 border-t border-glass-edge pt-4 phone:gap-5 phone:pt-5">
           {next
             ? <SessionMeta session={next} />
             : <PlanningButton label="Plan de eerste sessie"><Plus size={16} />Plan de eerste sessie<ArrowRight size={16} /></PlanningButton>}

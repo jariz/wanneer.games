@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 import { IconTile } from "./ui/typography";
 
 function DetailLine({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return <div className="flex items-center gap-3 border-t border-edge py-4 text-[13px]"><span className="text-quiet">{icon}</span><span>{children}</span></div>;
+  return <div className="flex items-center gap-3 border-t border-glass-edge py-4 text-[13px]"><IconTile className="mb-0 size-8 shrink-0 rounded-lg text-quiet">{icon}</IconTile><span>{children}</span></div>;
 }
 
 export default function SessionRow({ session }: { session: Session }) {
@@ -19,8 +19,8 @@ export default function SessionRow({ session }: { session: Session }) {
 
   return (
     <Dialog>
-      <DialogTrigger className="flex w-full items-center gap-4 border-b px-3 py-4 text-left transition-colors hover:bg-raised/30" aria-label={`Bekijk sessie ${fullDate} om ${time}`}>
-        <span className="grid h-[53px] w-[45px] shrink-0 place-items-center rounded-md border border-control bg-surface/40">
+      <DialogTrigger className="glass-control my-2 flex w-full items-center gap-4 rounded-lg border border-glass-edge px-3 py-4 text-left transition-colors hover:bg-white/5" aria-label={`Bekijk sessie ${fullDate} om ${time}`}>
+        <span className="glass-control grid h-[53px] w-[45px] shrink-0 place-items-center rounded-md border border-glass-edge">
           <strong className="pt-1 text-[21px] font-semibold leading-none">{dateLabel(session.start, "dd")}</strong>
           <span className="pb-1 text-[9px] uppercase text-quiet">{formatDate(session.start, { month: "short" })}</span>
         </span>

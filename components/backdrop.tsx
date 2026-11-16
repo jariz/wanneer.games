@@ -2,9 +2,14 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Game } from "@/lib/game-types";
-import { createLensRenderer, type LensRenderer } from "@/lib/lens-renderer";
+import { createArtworkRenderer, type ArtworkRenderer } from "@/lib/artwork-renderer";
 
-const autoplayInterval = 5000;
+const autoplayInterval = 10000;
+
+function nextArtwork(game: Game, previous = game.artwork) {
+  const alternatives = game.artworks.filter((image) => image !== previous);
+  return alternatives[Math.floor(Math.random() * alternatives.length)] ?? previous;
+}
 
 type BackdropState = {
   artwork: Game[];
@@ -33,19 +38,29 @@ export function usePinnedBackdrop(game: Game | null) {
 export function BackdropProvider({ backgrounds, featured, children }: { backgrounds: Game[]; featured: Game | null; children: ReactNode }) {
   const [pinned, pin] = useState<Game | null>(null);
   const lead = pinned ?? featured;
-  const artwork = lead ? [lead, ...backgrounds.filter((game) => game.id !== lead.id)] : backgrounds;
+  const games = lead ? [lead, ...backgrounds.filter((game) => game.id !== lead.id)] : backgrounds;
   // The index belongs to the current lead, so a new lead starts at its own artwork.
-  const [position, setPosition] = useState({ lead: lead?.id, index: 0 });
+  const [position, setPosition] = useState<{ lead: number | undefined; index: number; images: Record<number, string | null> }>({ lead: lead?.id, index: 0, images: {} });
   const index = position.lead === lead?.id ? position.index : 0;
-  const step = (offset: number) => setPosition({ lead: lead?.id, index: (index + offset + artwork.length) % artwork.length });
+  const artwork = games.map((game) => position.images[game.id] ? { ...game, artwork: position.images[game.id] } : game);
+  const step = (offset: number) => {
+    if (!artwork.length) return;
+    const next = (index + offset + artwork.length) % artwork.length;
+    const game = artwork[next];
+    setPosition({ lead: lead?.id, index: next, images: { ...position.images, [game.id]: nextArtwork(game) } });
+  };
   const autoplay = !lead && artwork.length > 1;
 
   // Keyed on index, so stepping manually restarts the timer.
   useEffect(() => {
     if (!autoplay) return;
-    const timer = setTimeout(() => setPosition({ lead: undefined, index: (index + 1) % artwork.length }), autoplayInterval);
+    const timer = setTimeout(() => {
+      const next = (index + 1) % backgrounds.length;
+      const game = backgrounds[next];
+      setPosition({ lead: undefined, index: next, images: { ...position.images, [game.id]: nextArtwork(game, position.images[game.id] ?? game.artwork) } });
+    }, autoplayInterval);
     return () => clearTimeout(timer);
-  }, [autoplay, index, artwork.length]);
+  }, [autoplay, index, backgrounds, position.images]);
 
   return (
     <BackdropContext value={{ artwork, active: artwork[index], step, pin }}>
@@ -58,33 +73,40 @@ export function Backdrop() {
   const { artwork, active } = useBackdrop();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
-  const renderer = useRef<LensRenderer | null>(null);
+  const renderer = useRef<ArtworkRenderer | null>(null);
 
   useEffect(() => {
     if (matchMedia("(prefers-reduced-transparency: reduce)").matches) return;
-    const created = createLensRenderer(canvasRef.current!, regionRef.current!);
+    const created = createArtworkRenderer(canvasRef.current!, regionRef.current!);
     if (!created) return;
     renderer.current = created;
     document.documentElement.dataset.lensActive = "";
+    let disposed = false;
+    let destroyGlass: (() => void) | undefined;
+    import("@/lib/liquid-glass").then(({ createLiquidGlass }) => {
+      if (!disposed) destroyGlass = createLiquidGlass(canvasRef.current!);
+    }).catch((error) => console.warn("Liquid glass unavailable:", error));
     return () => {
+      disposed = true;
+      destroyGlass?.();
       created.destroy();
       renderer.current = null;
       delete document.documentElement.dataset.lensActive;
     };
   }, []);
 
-  useEffect(() => renderer.current?.setImage(active?.artwork ?? null), [active]);
+  useEffect(() => renderer.current?.setImage(active?.artwork ?? null), [active?.artwork]);
 
   return (
     <>
-      <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 -z-10 hidden size-full [:root[data-lens-active]_&]:block" aria-hidden="true" />
+      <canvas ref={canvasRef} className="pointer-events-none absolute inset-x-0 top-0 -z-10 hidden w-full [:root[data-lens-active]_&]:block" aria-hidden="true" />
       <div
         ref={regionRef}
         className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
         aria-hidden="true"
         data-testid="backdrop"
       >
-        <div className="absolute inset-0 brightness-[.55] saturate-50 [:root[data-lens-active]_&]:hidden">
+        <div className="absolute inset-0 brightness-[.82] [:root[data-lens-active]_&]:hidden">
           {artwork.map((game) => (
             <div
               key={game.id}
@@ -95,8 +117,7 @@ export function Backdrop() {
             />
           ))}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-canvas/90 via-canvas/50 to-canvas/20 [:root[data-lens-active]_&]:hidden" />
-        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-canvas/30 [:root[data-lens-active]_&]:hidden" />
+        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-transparent [:root[data-lens-active]_&]:hidden" />
       </div>
     </>
   );

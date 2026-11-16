@@ -2,6 +2,7 @@ import { CalendarDays, Plus } from "lucide-react";
 import type { Session } from "@/lib/session-display";
 import { PlanningButton } from "./planning-access";
 import SessionRow from "./session-row";
+import { Counter } from "./ui/typography";
 
 function EmptyAgenda() {
   return (
@@ -19,13 +20,13 @@ export default function Agenda({ sessions }: { sessions: Session[] }) {
   return (
     <section aria-labelledby="agenda-heading">
       <h2 className="mb-4 text-base font-semibold tracking-tight phone:text-[17px]" id="agenda-heading">
-        De agenda <span className="ml-2 rounded border px-1 py-0.5 align-middle font-mono text-[9px] text-quiet">{sessions.length.toString().padStart(2, "0")}</span>
+        De agenda <Counter compact className="ml-2 align-middle">{sessions.length.toString().padStart(2, "0")}</Counter>
       </h2>
-      <div className="border-t">
+      <div className="border-t border-glass-edge">
         {sessions.map((session) => <SessionRow key={session.id} session={session} />)}
         {sessions.length === 0 && <EmptyAgenda />}
       </div>
-      <PlanningButton className="mt-4 flex w-full items-center justify-center gap-2 glass relative rounded-lg border border-white/[.08] p-3.5 text-[11px] font-medium transition-colors hover:bg-raised/50" label="Nog een sessie inplannen">
+      <PlanningButton className="glass-control mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-glass-edge p-3.5 text-[11px] font-medium transition-colors hover:bg-white/5" label="Nog een sessie inplannen">
         <Plus size={16} className="text-quiet" />
         Sessie inplannen
       </PlanningButton>

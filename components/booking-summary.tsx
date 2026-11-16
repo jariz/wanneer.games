@@ -20,11 +20,11 @@ export default function BookingSummary({ group, games, game, onGameChange, day, 
 }) {
   return (
     <Card render={<aside />} className="flex flex-col" aria-labelledby="booking-summary-heading">
-      <StepHeading className="border-b border-white/[.08] p-5 phone:p-6" step="02" id="booking-summary-heading" title="Game en sessie" description="Kies wat jullie gaan spelen." />
+      <StepHeading className="border-b border-glass-edge p-5 phone:p-6" step="02" id="booking-summary-heading" title="Game en sessie" description="Kies wat jullie gaan spelen." />
       <div className="flex flex-1 flex-col p-5 phone:p-6">
         <GamePicker group={group} games={games} value={game} onValueChange={onGameChange} />
         <div className="mt-auto pt-6">
-          <div className="grid gap-2 border-t border-white/[.08] pt-[18px]">
+          <div className="grid gap-2 border-t border-glass-edge pt-[18px]">
             <Eyebrow className="text-[7px]">GEKOZEN TIJD</Eyebrow>
             <strong className="text-[13px] font-semibold">{day ? formatDate(`${day}T12:00:00Z`, { weekday: "long", day: "numeric", month: "long" }) : "Nog geen dag gekozen"}</strong>
             <span className="text-[11px] text-quiet">{start ? dateLabel(start, "HH:mm") : "Kies links een beschikbare tijd"}</span>

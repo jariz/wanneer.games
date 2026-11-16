@@ -1,0 +1,143 @@
+import liquidGL, { type LiquidLens } from "liquid-gl";
+
+const selector = ".glass, .glass-control";
+const interactive = "button, a, [role='radio'], [role='tab'], .glass-control:has(input)";
+const alienNavOptics = { refraction: .073, bevelDepth: .2, bevelWidth: .156 };
+const materials = {
+  panel: { frost: 2.6, magnify: 1.025, tint: "rgba(8, 12, 16, 0.4)" },
+  bar: { frost: 2, magnify: 1, tint: "rgba(8, 12, 16, 0.55)" },
+  control: { frost: 1.8, magnify: 1.045, tint: "rgba(8, 12, 16, 0.12)" },
+  tooltip: { frost: 5, magnify: 1, tint: "rgba(8, 12, 16, 0.55)" },
+};
+
+function materialFor(element: HTMLElement) {
+  return element.matches('[role="tooltip"]') ? "tooltip" : element.dataset.lens === "bar" ? "bar" : element.classList.contains("glass-control") ? "control" : "panel";
+}
+
+function optics() {
+  // liquidGL offsets snapshot UVs, not element-local pixels.
+  const size = Math.max(innerWidth, innerHeight, document.body.scrollWidth, document.body.scrollHeight);
+  return { refraction: 6 / size, bevelDepth: 18 / size };
+}
+
+export function createLiquidGlass(artwork: HTMLCanvasElement) {
+  const lenses = new Map<HTMLElement, LiquidLens>();
+  const tints = new WeakMap<LiquidLens, string | null>();
+  const updateTint = (lens: LiquidLens) => {
+    const material = materialFor(lens.el);
+    const popup = lens.el.closest('[role="dialog"], [role="alertdialog"], [role="tooltip"], [data-slot="combobox-content"]');
+    const clear = material !== "bar" && !popup && lens.el.closest('[data-glass-tone="clear"]');
+    const tint = clear ? null : popup && material === "panel" ? "rgba(8, 12, 16, 0.55)" : materials[material].tint;
+    if (tints.get(lens) === tint) return;
+    lens.setTint(tint);
+    tints.set(lens, tint);
+  };
+  let frame = 0;
+  let destroyed = false;
+  let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+  const refresh = () => {
+    if (refreshTimer) return;
+    refreshTimer = setTimeout(() => {
+      refreshTimer = undefined;
+      // v3's dynamic rasterizer ignores canvases; refresh its scene explicitly.
+      liquidGL.registerDynamic([]);
+    }, 100);
+  };
+
+  function sync() {
+    frame = 0;
+    if (destroyed) return;
+    const elements = new Set(document.querySelectorAll<HTMLElement>(selector));
+    const displacement = optics();
+    for (const [element, lens] of lenses) {
+      Object.assign(lens.options, materialFor(element) === "bar" ? alienNavOptics : displacement);
+      updateTint(lens);
+      if (elements.has(element) && element.checkVisibility() && !element.matches("[data-disabled], [data-unavailable], :disabled")) continue;
+      // React may have replaced a placeholder with game artwork since mounting.
+      const background = element.style.backgroundImage && element.style.backgroundImage !== "none" ? element.style.background : null;
+      lens.destroy();
+      if (background) element.style.background = background;
+      delete element.dataset.glassRendered;
+      lenses.delete(element);
+    }
+    const added = [...elements].filter((element) =>
+      !lenses.has(element) && element.checkVisibility() &&
+      !element.matches("[data-disabled], [data-unavailable], :disabled"),
+    );
+    updateInteraction();
+    if (!added.length) return;
+    for (const element of added) element.dataset.glassPending = materialFor(element);
+    for (const [name, material] of Object.entries(materials)) {
+      if (!added.some((element) => element.dataset.glassPending === name)) continue;
+      const result = liquidGL({
+        target: `[data-glass-pending="${name}"]`,
+        snapshot: "body",
+        content: false,
+        engine: "auto",
+        zIndex: -1,
+        resolution: Math.min(devicePixelRatio, 1.5),
+        bevelWidth: .14,
+        ...(name === "bar" ? alienNavOptics : displacement),
+        aberration: 0,
+        interaction: "none",
+        ...material,
+        shadow: name === "bar",
+        specular: false,
+        reveal: "none",
+        on: {
+          init(lens) {
+            // liquidGL disables pointer events even with native content enabled.
+            lens.el.style.pointerEvents = "";
+            lens.el.dataset.glassRendered = "";
+          },
+        },
+      });
+      for (const lens of Array.isArray(result) ? result : result ? [result] : []) {
+        // A batch shares its options object; hover changes must stay per-lens.
+        lens.options = { ...lens.options };
+        updateTint(lens);
+        lenses.set(lens.el, lens);
+      }
+    }
+    for (const element of added) delete element.dataset.glassPending;
+    updateInteraction();
+    refresh();
+  }
+
+  const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
+  const updateInteraction = () => {
+    for (const [element, lens] of lenses) {
+      if (!element.matches(interactive)) continue;
+      const active = element.matches(":hover, :focus-within") &&
+        !element.matches("[data-selected], [data-checked], [data-disabled], [data-unavailable], :disabled");
+      // This is the same runtime option update used by liquidGL's own helper.
+      lens.options.frost = materials[materialFor(element)].frost + (active ? 2.5 : 0);
+    }
+  };
+  const observer = new MutationObserver(schedule);
+  observer.observe(document.body, {
+    subtree: true, childList: true, attributes: true,
+    attributeFilter: ["class", "hidden", "open", "data-open", "data-disabled", "data-unavailable", "data-selected", "data-checked", "data-glass-tone"],
+  });
+  document.addEventListener("toggle", schedule, true);
+  addEventListener("resize", schedule);
+  const interactionEvents = ["pointerover", "pointerout", "focusin", "focusout"] as const;
+  for (const event of interactionEvents) document.addEventListener(event, schedule);
+  artwork.addEventListener("artwork-frame", refresh);
+  sync();
+  return () => {
+    destroyed = true;
+    observer.disconnect();
+    clearTimeout(refreshTimer);
+    artwork.removeEventListener("artwork-frame", refresh);
+    document.removeEventListener("toggle", schedule, true);
+    removeEventListener("resize", schedule);
+    for (const event of interactionEvents) document.removeEventListener(event, schedule);
+    cancelAnimationFrame(frame);
+    for (const [element, lens] of lenses) {
+      lens.destroy();
+      delete element.dataset.glassRendered;
+    }
+    lenses.clear();
+  };
+}

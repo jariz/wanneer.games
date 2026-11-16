@@ -19,7 +19,7 @@ export const choiceName = (choice: GameChoice) => (isGame(choice) ? choice.name 
 
 function Cover({ game, className }: { game: Game | null; className: string }) {
   return (
-    <span className={`grid shrink-0 place-items-center rounded bg-raised bg-cover bg-center text-quiet ${className}`} style={game?.cover ? { backgroundImage: `url("${game.cover}")` } : undefined}>
+    <span className={`${game?.cover ? "" : "glass-control border border-white/10 "}grid shrink-0 place-items-center rounded bg-cover bg-center text-quiet ${className}`} style={game?.cover ? { backgroundImage: `url("${game.cover}")` } : undefined}>
       {!game?.cover && <Gamepad2 size={16} />}
     </span>
   );
@@ -56,18 +56,18 @@ export default function GamePicker({ group, games, value, onValueChange }: {
       status={loading ? "loading" : "idle"}
     >
       <ComboboxLabel className="mb-2 block text-[11px] font-medium text-ink">Game</ComboboxLabel>
-      <div ref={setField} className="flex items-center gap-2.5 rounded-lg border border-control bg-raised/50 pl-2 pr-1 transition-colors focus-within:border-brand">
+      <div ref={setField} className="glass-control flex items-center gap-2.5 rounded-lg border border-glass-edge pl-2 pr-1 transition-colors focus-within:border-brand">
         <Cover game={choiceGame(value)} className="h-9 w-7" />
         <ComboboxInput className="min-h-11 min-w-0 flex-1 bg-transparent text-xs text-ink placeholder:text-quiet focus-visible:outline-none" placeholder="Kies of typ een game…" maxLength={120} />
         <span className="flex items-center">
-          <ComboboxClear className="grid size-7 place-items-center rounded-md text-quiet hover:bg-raised hover:text-ink" aria-label="Wis game"><X size={15} /></ComboboxClear>
-          <ComboboxTrigger className="grid size-7 place-items-center rounded-md text-quiet hover:bg-raised hover:text-ink data-[open]:rotate-180" aria-label="Toon games"><ChevronDown size={16} /></ComboboxTrigger>
+          <ComboboxClear className="grid size-7 place-items-center rounded-md text-quiet hover:bg-white/10 hover:text-ink" aria-label="Wis game"><X size={15} /></ComboboxClear>
+          <ComboboxTrigger className="grid size-7 place-items-center rounded-md text-quiet hover:bg-white/10 hover:text-ink data-[open]:rotate-180" aria-label="Toon games"><ChevronDown size={16} /></ComboboxTrigger>
         </span>
       </div>
       <ComboboxContent
         anchor={field}
         sideOffset={6}
-        className="z-50 w-[var(--anchor-width)] [&:not(:has([data-slot=combobox-item],[data-slot=combobox-status]:not(:empty)))]:hidden overflow-y-auto overscroll-contain rounded-xl border border-white/[.08] bg-surface p-1 shadow-2xl [max-height:min(360px,var(--available-height))] [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin]"
+        className="glass z-50 w-[var(--anchor-width)] [&:not(:has([data-slot=combobox-item],[data-slot=combobox-status]:not(:empty)))]:hidden overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-surface/70 p-1 shadow-xl before:hidden [max-height:min(360px,var(--available-height))] [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin]"
       >
         <ComboboxStatus className="px-3 py-2.5 text-[11px] text-quiet empty:hidden">
           {(state) => (state.loading ? "Games zoeken…" : null)}
@@ -78,7 +78,7 @@ export default function GamePicker({ group, games, value, onValueChange }: {
               key={game.id}
               value={game}
               label={game.name}
-              className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 text-xs text-ink data-[highlighted]:bg-raised/70 data-[selected]:bg-brand/15 data-[selected]:text-brand"
+              className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 text-xs text-ink data-[highlighted]:bg-white/5 data-[selected]:bg-brand/10 data-[selected]:text-ink"
             >
               <Cover game={game} className="h-10 w-[30px]" />
               <span className="truncate">{game.name}</span>

@@ -60,13 +60,11 @@ const excludedArtworks = new Set([
   "ar3sas", "ar69b1", "ar3tfx", // Schedule I, Call of Duty: Black Ops 6, Baldur's Gate III: too dark
 ]);
 
-// Picks a different usable artwork on each call, so a game's background varies between visits.
-function backgroundArtwork(artworks: Artwork[] = []) {
-  const usable = artworks
+function backgroundArtworks(artworks: Artwork[] = []) {
+  return artworks
     .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1) && !excludedArtworks.has(art.image_id))
     // IGDB's alpha_channel flag is set on plenty of opaque artwork, so only shape is checked: square or portrait images don't fill the hero.
     .filter((art) => (art.width ?? 16) / (art.height ?? 9) >= 1.3);
-  return usable[Math.floor(Math.random() * usable.length)];
 }
 
 async function gameQuery(query: string): Promise<Game[]> {
@@ -78,12 +76,16 @@ async function gameQuery(query: string): Promise<Game[]> {
     );
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
-    return data.map((game) => ({
-      id: game.id,
-      name: game.name,
-      cover: image(game.cover?.image_id, "t_cover_big"),
-      artwork: image(backgroundArtwork(game.artworks)?.image_id, "t_1080p"),
-    }));
+    return data.map((game) => {
+      const artworks = [...new Set(backgroundArtworks(game.artworks).map((art) => image(art.image_id, "t_1080p")!))];
+      return {
+        id: game.id,
+        name: game.name,
+        cover: image(game.cover?.image_id, "t_cover_big"),
+        artwork: artworks[Math.floor(Math.random() * artworks.length)] ?? null,
+        artworks,
+      };
+    });
   } catch { return []; }
 }
 

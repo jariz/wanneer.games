@@ -50,7 +50,7 @@ function MonthCalendar({ month, onMonthChange, day, onDayChange, availableDays, 
         <CalendarWeekdays>{(index) => <CalendarWeekday className="pb-2.5 font-mono text-[8px] font-normal uppercase text-quiet" index={index} />}</CalendarWeekdays>
         <CalendarWeeks>
           {(cell) => (
-            <CalendarDay className="group h-11 cursor-pointer rounded-md border border-control bg-raised/50 text-center text-xs transition-colors hover:border-brand hover:bg-control/40 data-[disabled]:cursor-default data-[unavailable]:cursor-default data-[disabled]:border-transparent data-[unavailable]:border-transparent data-[disabled]:bg-transparent data-[unavailable]:bg-transparent data-[disabled]:text-quiet/60 data-[unavailable]:text-quiet/60 data-[outside]:opacity-40 data-[selected]:border-brand data-[selected]:bg-brand data-[selected]:font-semibold data-[selected]:text-canvas phone:h-12 desktop:h-11 wide:h-[52px]" value={cell.date}>
+            <CalendarDay className="glass-control group h-11 cursor-pointer rounded-md border border-glass-edge text-center text-xs transition-colors hover:border-brand hover:bg-white/10 data-[disabled]:cursor-default data-[unavailable]:cursor-default data-[disabled]:border-transparent data-[unavailable]:border-transparent data-[disabled]:bg-transparent data-[unavailable]:bg-transparent data-[disabled]:text-quiet/60 data-[unavailable]:text-quiet/60 data-[outside]:opacity-40 data-[selected]:bg-brand data-[selected]:font-semibold data-[selected]:text-canvas phone:h-12 desktop:h-11 wide:h-[52px]" value={cell.date}>
               {(state) => (
                 <span className="flex flex-col items-center gap-[3px] py-1">
                   {state.label}
@@ -68,12 +68,12 @@ function MonthCalendar({ month, onMonthChange, day, onDayChange, availableDays, 
 function TimeSlots({ day, slots, time, onTimeChange, disabled }: { day: string | null; slots: string[]; time: string | null; onTimeChange: (time: string | null) => void; disabled: boolean }) {
   return (
     // Beside the calendar, size containment keeps a long day from stretching the card: the column takes the calendar's height and scrolls.
-    <div className="flex flex-col border-t border-white/[.08] p-5 phone:border-l phone:border-t-0 phone:px-3 phone:pb-[18px] phone:pt-6 phone:[contain:size]">
+    <div className="flex flex-col border-t border-glass-edge p-5 phone:border-l phone:border-t-0 phone:px-3 phone:pb-[18px] phone:pt-6 phone:[contain:size]">
       <h3 className="mb-4 text-[10px] font-medium">{day ? formatDate(`${day}T12:00:00Z`, { weekday: "short", day: "numeric", month: "short" }) : "Kies eerst een dag"}</h3>
       {day && slots.length > 0 ? (
         <RadioGroup aria-label="Kies een starttijd" value={time} onValueChange={onTimeChange} disabled={disabled} className="grid max-h-60 min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto p-0.5 [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin] phone:max-h-none phone:grid-cols-1">
           {slots.map((slot) => (
-            <Radio key={slot} value={slot} aria-label={dateLabel(slot, "HH:mm")} className="group flex min-h-10 w-full items-center justify-center gap-2.5 rounded-md border border-control bg-raised/50 text-xs tabular-nums hover:bg-control/40 data-[checked]:border-brand data-[checked]:bg-brand data-[checked]:text-canvas">
+            <Radio key={slot} value={slot} aria-label={dateLabel(slot, "HH:mm")} className="glass-control group flex min-h-10 w-full items-center justify-center gap-2.5 rounded-md border border-glass-edge text-xs tabular-nums transition-colors hover:border-brand hover:bg-white/10 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40 data-[checked]:bg-brand data-[checked]:font-semibold data-[checked]:text-canvas">
               <span>{dateLabel(slot, "HH:mm")}</span>
             </Radio>
           ))}
@@ -94,11 +94,11 @@ export default function SlotPicker({ slots, loading, error, onRetry, time, onTim
 
   return (
     <Card render={<section />} aria-labelledby="pick-date-heading">
-      <StepHeading className="border-b border-white/[.08] p-5 phone:p-6" step="01" id="pick-date-heading" title="Datum en tijd" description="Kies een beschikbaar moment." />
+      <StepHeading className="border-b border-glass-edge p-5 phone:p-6" step="01" id="pick-date-heading" title="Datum en tijd" description="Kies een beschikbaar moment." />
       <div className="grid grid-cols-1 phone:grid-cols-[minmax(0,1fr)_170px] desktop:grid-cols-[minmax(0,1fr)_135px] wide:grid-cols-[minmax(0,1fr)_160px]">
         <div className="min-w-0 px-3 py-5 phone:px-5 phone:py-6 wide:p-7">
           <MonthCalendar {...calendar} disabled={calendar.disabled || loading} availableDays={availableDays} />
-          <div className="mt-5 flex items-center gap-4 border-t border-white/[.08] pt-4 text-[8px] text-quiet">
+          <div className="mt-5 flex items-center gap-4 border-t border-glass-edge pt-4 text-[8px] text-quiet">
             <span className="flex items-center gap-1.5"><i className="size-[5px] rounded-full bg-brand" />Beschikbaar</span>
             <span className="flex items-center gap-1.5"><i className="size-[5px] rounded-full border border-brand" />Vandaag</span>
           </div>

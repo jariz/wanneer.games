@@ -15,7 +15,7 @@ function DialogContent({ className, closeLabel, children, ...props }: Omit<Style
   return (
     <DialogContentPrimitive
       className={cn(
-        "fixed inset-0 m-auto h-fit max-h-[calc(100dvh-40px)] w-[min(460px,calc(100vw-32px))] overflow-auto glass rounded-2xl border border-white/[.08] p-6 text-ink shadow-2xl transition-[opacity,scale] duration-200 phone:p-8 backdrop:bg-canvas/60 backdrop:backdrop-blur-md data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
+        "fixed inset-0 m-auto h-fit max-h-[calc(100dvh-40px)] w-[min(460px,calc(100vw-32px))] overflow-auto glass rounded-2xl border border-white/25 p-6 text-ink shadow-2xl transition-[opacity,scale] duration-200 phone:p-8 backdrop:bg-black/40 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
         className,
       )}
       {...props}

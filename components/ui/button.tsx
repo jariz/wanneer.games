@@ -7,10 +7,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "rounded-lg border border-brand bg-brand text-canvas shadow-sm hover:-translate-y-px hover:bg-brand/90 disabled:translate-y-0 data-[disabled]:translate-y-0",
-        secondary: "rounded-lg border border-control bg-raised text-ink hover:-translate-y-px hover:bg-control/40 disabled:translate-y-0 data-[disabled]:translate-y-0",
-        ghost: "rounded-md border border-transparent text-quiet hover:border-control hover:bg-raised hover:text-ink",
-        overlay: "glass relative rounded-md text-ink hover:bg-raised/50",
+        primary: "glass-primary relative rounded-lg border border-brand bg-brand text-canvas hover:-translate-y-px hover:bg-brand/90 disabled:translate-y-0 data-[disabled]:translate-y-0",
+        secondary: "glass-control rounded-lg border border-glass-edge text-ink hover:-translate-y-px hover:bg-white/10 disabled:translate-y-0 data-[disabled]:translate-y-0",
+        ghost: "glass-control rounded-md border border-glass-edge text-quiet hover:border-white/40 hover:bg-white/10 hover:text-ink",
+        overlay: "glass relative rounded-md border border-glass-edge text-ink hover:border-white/40 hover:bg-white/10 hover:text-brand active:scale-95",
         link: "gap-2 py-2 text-[10px] text-quiet hover:text-brand hover:underline",
       },
       size: {

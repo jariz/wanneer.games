@@ -34,6 +34,7 @@ const config: Config = {
         surface: "rgb(var(--surface) / <alpha-value>)",
         raised: "rgb(var(--raised) / <alpha-value>)",
         edge: "rgb(var(--edge) / <alpha-value>)",
+        "glass-edge": "rgb(255 255 255 / .15)",
         control: "rgb(var(--control) / <alpha-value>)",
         ink: "rgb(var(--ink) / <alpha-value>)",
         quiet: "rgb(var(--quiet) / <alpha-value>)",

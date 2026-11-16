@@ -23,6 +23,8 @@ test("clan password unlocks only its own planner; Escape returns focus", async (
   const trigger = page.getByRole("button", { name: "Inplannen", exact: true });
   await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveAttribute("data-glass-rendered", "");
+  await expect(page.getByRole("dialog")).toHaveCSS("pointer-events", "auto");
   await page.keyboard.press("Escape");
   await expect(trigger).toBeFocused();
   await trigger.click();
@@ -41,6 +43,9 @@ test("planner calendar, game artwork, and agent actions work without creating a 
   await context.addCookies([{ name: "planning-kiwis", value: accessCookie("kiwis", localPassword()), domain: "localhost", path: "/", httpOnly: true, sameSite: "Strict" }]);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/Glass backdrop disabled|GL_INVALID|WebGL:.*error/i.test(message.text())) errors.push(message.text());
+  });
   await page.goto("/kiwis/inplannen");
   const book = page.getByRole("complementary", { name: "Game en sessie" }).getByRole("button", { name: "Inplannen" });
   await expect(book).toBeDisabled();
@@ -49,8 +54,18 @@ test("planner calendar, game artwork, and agent actions work without creating a 
   const time = page.getByRole("radiogroup", { name: "Kies een starttijd" }).getByRole("radio").first();
   await time.click();
   await expect(time).toHaveAttribute("aria-checked", "true");
+  await expect(day).toHaveAttribute("data-glass-rendered", "");
+  await expect(time).toHaveAttribute("data-glass-rendered", "");
+  const selectedColors = await day.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const rgb = (key: string) => `rgb(${root.getPropertyValue(key).trim().split(/\s+/).join(", ")})`;
+    return { brand: rgb("--brand"), canvas: rgb("--canvas") };
+  });
+  await expect(day).toHaveCSS("background-color", selectedColors.brand);
+  await expect(day).toHaveCSS("color", selectedColors.canvas);
   await expect(book).toBeEnabled();
   await page.getByRole("button", { name: "Toon games" }).click();
+  await expect(page.locator('[data-slot="combobox-content"]')).toHaveAttribute("data-glass-rendered", "");
   await page.getByRole("option", { name: "Valheim", exact: true }).click();
   await expect(page.getByRole("combobox", { name: "Game" })).toHaveValue("Valheim");
   await expect(page.getByTestId("backdrop").locator("[data-active]")).toHaveAttribute("data-game", "Valheim");
@@ -85,4 +100,49 @@ test("mobile lobby fits and subscription dialog closes", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Google Agenda/ })).toHaveAttribute("href", /cid=/);
   await page.getByRole("button", { name: "Sluit agenda koppelen" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("glass keeps its CSS fallback when WebGL is unavailable", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type, ...args) {
+      if (String(type).startsWith("webgl")) return null;
+      return original.call(this, type, ...args);
+    } as typeof original;
+  });
+  await page.goto("/");
+  await expect(page.getByRole("tab", { name: /Kiwi/ })).toBeVisible();
+  await expect(page.locator("html")).not.toHaveAttribute("data-lens-active", "");
+  await expect(page.locator("[data-glass-rendered]")).toHaveCount(0);
+  const glass = await page.locator("header.glass").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { blur: style.backdropFilter, background: style.backgroundColor };
+  });
+  expect(glass.blur).toContain("blur(");
+  expect(glass.background).not.toBe("rgba(0, 0, 0, 0)");
+});
+
+test("scrolling reuses the artwork instead of repainting the glass backdrop", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator("header")).toHaveAttribute("data-glass-rendered", "");
+  const result = await page.evaluate(async () => {
+    const artwork = document.querySelector('[data-testid="backdrop"]')!.previousElementSibling as HTMLCanvasElement;
+    // Complete pending artwork loads before measuring scroll-only work.
+    await Promise.all([...document.images].map((image) => image.decode().catch(() => {})));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    let draws = 0;
+    const onDraw = () => draws++;
+    artwork.addEventListener("artwork-frame", onDraw);
+    const before = artwork.getBoundingClientRect().top;
+    const start = scrollY;
+    scrollTo(0, 80);
+    for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame);
+    artwork.removeEventListener("artwork-frame", onDraw);
+    return { draws, moved: before - artwork.getBoundingClientRect().top, scrolled: scrollY - start };
+  });
+  expect(result.scrolled).toBeGreaterThan(0);
+  expect(result.moved).toBeCloseTo(result.scrolled);
+  expect(result.draws).toBe(0);
 });

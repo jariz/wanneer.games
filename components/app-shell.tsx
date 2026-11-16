@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import { Plus } from "lucide-react";
 import { SiYoutube } from "react-icons/si";
@@ -33,24 +33,25 @@ export default function AppShell({ access, featured, backgrounds, children }: {
   access: ClanAccess; featured: Record<Clan, Game | null>; backgrounds: Game[]; children: React.ReactNode;
 }) {
   const params = useParams<{ group: string }>();
+  const pathname = usePathname();
   if (!isClan(params.group)) return children;
   const group = params.group;
 
   return (
     <PlanningAccess group={group} {...access[group]}>
       <BackdropProvider backgrounds={backgrounds} featured={featured[group]}>
-        <div className="relative isolate flex min-h-dvh flex-col" data-clan={group}>
+        <div className="relative flex min-h-dvh flex-col" data-clan={group} data-glass-tone={pathname.endsWith("/inplannen") ? "dark" : "clear"}>
           <Backdrop />
           <AgentBridge />
-          <a href="#inhoud" className="fixed -top-20 left-5 z-[999] rounded-md bg-brand p-4 text-canvas focus:top-3">Naar inhoud</a>
+          <a href="#inhoud" data-liquid-ignore="" className="fixed -top-20 left-5 z-[999] rounded-md bg-brand p-4 text-canvas focus:top-3">Naar inhoud</a>
           <Tabs value={group} className="flex flex-1 flex-col">
-            <header className="glass relative border-b border-white/[.08] shadow-none before:hidden" data-lens="bar">
+            <header className="glass relative border-b border-glass-edge shadow-none before:hidden" data-lens="bar">
               <Container className="grid h-[64px] grid-cols-[1fr_auto_1fr] items-center gap-3 phone:h-[76px]">
                 <Tooltip delay={300}>
                   <TooltipTrigger render={<Link href={clans[group].home} />} className="justify-self-start whitespace-nowrap text-[15px] font-bold tracking-[-.5px] phone:text-xl">
-                    Wanneer <span className="font-normal text-quiet">games?</span>
+                    wanneer<span className="font-normal text-quiet">.games</span>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" sideOffset={8} className="flex items-center rounded-md border border-white/[.08] bg-surface px-2.5 py-1.5 text-[11px] text-ink shadow-xl transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0">
+                  <TooltipContent side="bottom" sideOffset={8} className="glass flex items-center rounded-lg border border-white/15 bg-canvas/70 px-2.5 py-1.5 text-[11px] text-ink shadow-xl transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0">
                     Now powered by Liquid&nbsp;<span className="sr-only">Gl</span><SiYoutube size={15} className="text-[#FF0000]" aria-hidden="true" />ass
                   </TooltipContent>
                 </Tooltip>

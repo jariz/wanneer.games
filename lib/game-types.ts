@@ -3,4 +3,5 @@ export interface Game {
   name: string;
   cover: string | null;
   artwork: string | null;
+  artworks: string[];
 }
