@@ -66,8 +66,29 @@ test("planner calendar, game artwork, and agent actions work without creating a 
   await expect(book).toBeEnabled();
   await page.getByRole("button", { name: "Toon games" }).click();
   await expect(page.locator('[data-slot="combobox-content"]')).toHaveAttribute("data-glass-rendered", "");
+  const announcer = page.locator("next-route-announcer");
+  await expect(announcer).toHaveAttribute("data-liquid-ignore", "");
+  await expect(announcer.locator('[role="alert"]')).toHaveAttribute("aria-live", "assertive");
+  await expect(announcer.locator('[role="alert"]')).not.toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator('[data-slot="combobox-form-input"]')).toHaveAttribute("data-liquid-ignore", "");
+  await expect(page.locator('[data-slot="calendar-heading"]')).not.toHaveAttribute("data-liquid-ignore");
+  const options = page.locator('[data-slot="combobox-list"]');
+  const initialHeight = await options.evaluate((element) => element.scrollHeight);
+  expect(initialHeight).toBeGreaterThan(await options.evaluate((element) => element.clientHeight));
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await options.evaluate(async (element) => {
+      element.scrollTop = element.scrollHeight;
+      for (let frame = 0; frame < 3; frame++) await new Promise(requestAnimationFrame);
+    });
+    expect(await options.evaluate((element) => element.scrollHeight)).toBe(initialHeight);
+  }
+  await expect(page.getByRole("option").last()).toBeInViewport();
   await page.getByRole("option", { name: "Valheim", exact: true }).click();
   await expect(page.getByRole("combobox", { name: "Game" })).toHaveValue("Valheim");
+  const selectedCover = page.getByRole("combobox", { name: "Game" }).locator("..").locator(".bg-cover").first();
+  await expect(selectedCover).not.toHaveCSS("background-image", "none");
+  await expect(selectedCover).toHaveCSS("background-size", "cover");
+  await expect(selectedCover).toHaveCSS("background-position", "50% 50%");
   await expect(page.getByTestId("backdrop").locator("[data-active]")).toHaveAttribute("data-game", "Valheim");
   const result = await page.evaluate(async () => {
     const agent = (window as unknown as { wanneerAgent: {
@@ -89,6 +110,31 @@ test("planner calendar, game artwork, and agent actions work without creating a 
   expect(result.refused.error?.message).toContain("Maakt een echte Cal.com-afspraak");
   await expect(page.getByRole("combobox", { name: "Game" })).toHaveValue("Valheim met de ploeg");
   expect(errors).toEqual([]);
+});
+
+test("glass dialogs keep a stable scroll range in a short viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 300 });
+  await page.goto("/");
+  for (const name of ["Koppel je agenda", "Inplannen"]) {
+    const trigger = page.getByRole("button", { name, exact: true });
+    await trigger.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toHaveAttribute("data-glass-rendered", "");
+    const scroll = dialog.locator('[data-slot="dialog-scroll"]');
+    const initialHeight = await scroll.evaluate((element) => element.scrollHeight);
+    expect(initialHeight).toBeGreaterThan(await scroll.evaluate((element) => element.clientHeight));
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await scroll.evaluate(async (element) => {
+        element.scrollTop = element.scrollHeight;
+        for (let frame = 0; frame < 4; frame++) await new Promise(requestAnimationFrame);
+      });
+      expect(await scroll.evaluate((element) => element.scrollHeight)).toBe(initialHeight);
+      expect(await dialog.evaluate((element) => element.scrollTop)).toBe(0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  }
 });
 
 test("mobile lobby fits and subscription dialog closes", async ({ page }) => {

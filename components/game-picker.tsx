@@ -67,12 +67,12 @@ export default function GamePicker({ group, games, value, onValueChange }: {
       <ComboboxContent
         anchor={field}
         sideOffset={6}
-        className="glass z-50 w-[var(--anchor-width)] [&:not(:has([data-slot=combobox-item],[data-slot=combobox-status]:not(:empty)))]:hidden overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-surface/70 p-1 shadow-xl before:hidden [max-height:min(360px,var(--available-height))] [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin]"
+        className="glass z-50 flex w-[var(--anchor-width)] flex-col [&:not(:has([data-slot=combobox-item],[data-slot=combobox-status]:not(:empty)))]:hidden overflow-clip rounded-xl border border-white/10 bg-surface/70 p-1 shadow-xl before:hidden [max-height:min(360px,var(--available-height))]"
       >
-        <ComboboxStatus className="px-3 py-2.5 text-[11px] text-quiet empty:hidden">
+        <ComboboxStatus className="shrink-0 px-3 py-2.5 text-[11px] text-quiet empty:hidden">
           {(state) => (state.loading ? "Games zoeken…" : null)}
         </ComboboxStatus>
-        <ComboboxList>
+        <ComboboxList className="min-h-0 overflow-y-auto overscroll-contain [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin]">
           {items.map((game) => (
             <ComboboxItem
               key={game.id}

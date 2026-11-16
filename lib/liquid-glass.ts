@@ -4,10 +4,10 @@ const selector = ".glass, .glass-control";
 const interactive = "button, a, [role='radio'], [role='tab'], .glass-control:has(input)";
 const alienNavOptics = { refraction: .073, bevelDepth: .2, bevelWidth: .156 };
 const materials = {
-  panel: { frost: 2.6, magnify: 1.025, tint: "rgba(8, 12, 16, 0.4)" },
-  bar: { frost: 2, magnify: 1, tint: "rgba(8, 12, 16, 0.55)" },
-  control: { frost: 1.8, magnify: 1.045, tint: "rgba(8, 12, 16, 0.12)" },
-  tooltip: { frost: 5, magnify: 1, tint: "rgba(8, 12, 16, 0.55)" },
+  panel: { frost: 2.6, magnify: 1.025, opacity: .4 },
+  bar: { frost: 2, magnify: 1, opacity: .55 },
+  control: { frost: 1.8, magnify: 1.045, opacity: .12 },
+  tooltip: { frost: 5, magnify: 1, opacity: .55 },
 };
 
 function materialFor(element: HTMLElement) {
@@ -22,12 +22,24 @@ function optics() {
 
 export function createLiquidGlass(artwork: HTMLCanvasElement) {
   const lenses = new Map<HTMLElement, LiquidLens>();
+  const captureExcluded = new Set<Element>();
+  const excludeHiddenText = () => {
+    // The snapshot painter does not honour CSS clip on accessibility-only text,
+    // including Next's route announcement inside its shadow root.
+    for (const element of document.querySelectorAll('.sr-only, next-route-announcer, [data-slot="combobox-form-input"]')) {
+      if (element.hasAttribute("data-liquid-ignore")) continue;
+      element.setAttribute("data-liquid-ignore", "");
+      captureExcluded.add(element);
+    }
+  };
+  let tintColor = "";
+  const themeTint = (opacity: number) => `rgba(${tintColor}, ${opacity})`;
   const tints = new WeakMap<LiquidLens, string | null>();
   const updateTint = (lens: LiquidLens) => {
     const material = materialFor(lens.el);
     const popup = lens.el.closest('[role="dialog"], [role="alertdialog"], [role="tooltip"], [data-slot="combobox-content"]');
     const clear = material !== "bar" && !popup && lens.el.closest('[data-glass-tone="clear"]');
-    const tint = clear ? null : popup && material === "panel" ? "rgba(8, 12, 16, 0.55)" : materials[material].tint;
+    const tint = clear ? null : themeTint(popup && material === "panel" ? .55 : materials[material].opacity);
     if (tints.get(lens) === tint) return;
     lens.setTint(tint);
     tints.set(lens, tint);
@@ -47,6 +59,8 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   function sync() {
     frame = 0;
     if (destroyed) return;
+    excludeHiddenText();
+    tintColor = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim().split(/\s+/).join(", ");
     const elements = new Set(document.querySelectorAll<HTMLElement>(selector));
     const displacement = optics();
     for (const [element, lens] of lenses) {
@@ -54,9 +68,9 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
       updateTint(lens);
       if (elements.has(element) && element.checkVisibility() && !element.matches("[data-disabled], [data-unavailable], :disabled")) continue;
       // React may have replaced a placeholder with game artwork since mounting.
-      const background = element.style.backgroundImage && element.style.backgroundImage !== "none" ? element.style.background : null;
+      const backgroundImage = element.style.backgroundImage && element.style.backgroundImage !== "none" ? element.style.backgroundImage : null;
       lens.destroy();
-      if (background) element.style.background = background;
+      if (backgroundImage) element.style.backgroundImage = backgroundImage;
       delete element.dataset.glassRendered;
       lenses.delete(element);
     }
@@ -67,7 +81,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     updateInteraction();
     if (!added.length) return;
     for (const element of added) element.dataset.glassPending = materialFor(element);
-    for (const [name, material] of Object.entries(materials)) {
+    for (const [name, { opacity, ...material }] of Object.entries(materials)) {
       if (!added.some((element) => element.dataset.glassPending === name)) continue;
       const result = liquidGL({
         target: `[data-glass-pending="${name}"]`,
@@ -81,6 +95,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
         aberration: 0,
         interaction: "none",
         ...material,
+        tint: themeTint(opacity),
         shadow: name === "bar",
         specular: false,
         reveal: "none",
@@ -104,7 +119,11 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     refresh();
   }
 
-  const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
+  const schedule = () => {
+    // Mark newly mounted announcements before the next renderer frame.
+    excludeHiddenText();
+    if (!frame) frame = requestAnimationFrame(sync);
+  };
   const updateInteraction = () => {
     for (const [element, lens] of lenses) {
       if (!element.matches(interactive)) continue;
@@ -117,7 +136,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   const observer = new MutationObserver(schedule);
   observer.observe(document.body, {
     subtree: true, childList: true, attributes: true,
-    attributeFilter: ["class", "hidden", "open", "data-open", "data-disabled", "data-unavailable", "data-selected", "data-checked", "data-glass-tone"],
+    attributeFilter: ["class", "hidden", "open", "data-open", "data-disabled", "data-unavailable", "data-selected", "data-checked", "data-glass-tone", "data-clan"],
   });
   document.addEventListener("toggle", schedule, true);
   addEventListener("resize", schedule);
@@ -139,5 +158,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
       delete element.dataset.glassRendered;
     }
     lenses.clear();
+    for (const element of captureExcluded) element.removeAttribute("data-liquid-ignore");
+    captureExcluded.clear();
   };
 }

@@ -67,6 +67,7 @@ const additionalArtworks = new Map([
 
 // Artworks IGDB types as plain art that still don't work as a background.
 const excludedArtworks = new Set([
+  "ar4u6z", // Ghost of Tsushima: bright white sky and grass on the left
   "j7dbzjr8ddshnaewmb4d", // Ghost of Tsushima: duplicate composition
   "ar3sed", // Horizon Forbidden West: duplicate composition
   "ar7s2", // Age of Empires IV: logo card
