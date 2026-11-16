@@ -80,7 +80,7 @@ export function Backdrop() {
       <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 -z-10 hidden size-full [:root[data-lens-active]_&]:block" aria-hidden="true" />
       <div
         ref={regionRef}
-        className="pointer-events-none absolute inset-x-0 top-16 -z-10 h-[max(420px,calc(100svh_-_184px),56.25vw)] overflow-hidden phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
+        className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
         aria-hidden="true"
         data-testid="backdrop"
       >
