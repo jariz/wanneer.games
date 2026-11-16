@@ -21,7 +21,7 @@ const countdownFont = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Wanneer Games?",
-  description: "Wanneer is de volgende game sessie?",
+  description: "Wanneer is de volgende gamesessie?",
   // The site is dark already; Dark Reader rewriting it breaks hydration and the clan colours.
   other: { "darkreader-lock": "true" },
 };

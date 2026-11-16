@@ -32,7 +32,7 @@ export async function GET(
         ],
         startInputType: "utc",
         duration: { hours: 3 },
-        title: `${getEmoji(group)} Gaming sessie: ${booking.game ?? "onbekend"}`,
+        title: `${getEmoji(group)} ${booking.game?.trim() || "Gamesessie"}`,
         organizer: { name: "wanneer.games", email: "jarizw+wanneer@gmail.com" },
       }),
     );
@@ -53,7 +53,7 @@ export async function GET(
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "???" },
+      { error: error instanceof Error ? error.message : "Onbekende fout" },
       { status: 500 },
     );
   }

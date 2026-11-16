@@ -28,7 +28,7 @@ test("clan password unlocks only its own planner; Escape returns focus", async (
   await trigger.click();
   await page.getByLabel("Clanwachtwoord", { exact: true }).fill("wrong-password");
   await page.getByRole("button", { name: "Ontgrendel de planner" }).click();
-  await expect(page.getByText("Dat wachtwoord klopt niet. Vraag het even in de groep.")).toBeVisible();
+  await expect(page.getByText("Dat wachtwoord klopt niet.")).toBeVisible();
   await page.getByLabel("Clanwachtwoord", { exact: true }).fill(localPassword());
   await page.getByRole("button", { name: "Ontgrendel de planner" }).click();
   await expect(page).toHaveURL(/\/kiwis\/inplannen/);

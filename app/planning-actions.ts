@@ -17,9 +17,9 @@ export async function unlockPlanning(group: string, password: string) {
   }
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (!allowPlanningAttempt(`unlock:${group}:${ip}`)) {
-    return { ok: false, message: "Te vaak geprobeerd. Wacht een kwartiertje." };
+    return { ok: false, message: "Te veel pogingen. Probeer het over 15 minuten opnieuw." };
   }
-  if (!validPassword(group, password)) return { ok: false, message: "Dat wachtwoord klopt niet. Vraag het even in de groep." };
+  if (!validPassword(group, password)) return { ok: false, message: "Dat wachtwoord klopt niet." };
   await grantPlanningAccess(group);
   return { ok: true, message: "" };
 }
@@ -56,7 +56,7 @@ export async function planSession(group: string, input: unknown) {
   }
   const key = `${group}:${start}`;
   if (activeBookings.has(key)) return { ok: false as const, message: "Deze sessie wordt al ingepland." };
-  if (!allowPlanningAttempt(`book:${group}`, 30)) return { ok: false as const, message: "Even rustig aan. Probeer het later nog eens." };
+  if (!allowPlanningAttempt(`book:${group}`, 30)) return { ok: false as const, message: "Te veel verzoeken. Probeer het later opnieuw." };
   activeBookings.add(key);
   try {
     const slots = await getAvailability(group, month);

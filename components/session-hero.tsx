@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, Headphones, Plus } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus } from "lucide-react";
 import { dateLabel, formatDate, sessionTiming, type Session } from "@/lib/session-display";
 import { useBackdrop } from "./backdrop";
 import PageContainer from "./page-container";
@@ -13,8 +13,7 @@ function Countdown({ session, now }: { session: Session | undefined; now: number
   if (!session) return <div className="my-6 text-5xl font-semibold tracking-tight text-quiet">Nog niets<br />ingepland.</div>;
   if (timing.live) return (
     <div className="mb-4 mt-3 text-[54px] phone:mb-7 font-semibold leading-none tracking-[-3px] phone:text-[73px]">
-      We zijn <em className="not-italic text-brand">live.</em>
-      <span className="mt-4 flex items-center gap-2.5 text-sm font-normal tracking-normal text-quiet"><Headphones size={20} /> Tijd om in te loggen.</span>
+      Nu <em className="not-italic text-brand">bezig.</em>
     </div>
   );
   const units = Number(timing.days) > 0
@@ -63,7 +62,7 @@ export default function SessionHero({ next, now }: { next: Session | undefined; 
     <section className="relative min-h-[56.25vw] phone:min-h-[max(460px,calc(100svh_-_226px))]" aria-label="Volgende sessie" data-testid="session-hero">
       <PageContainer className="relative flex min-h-[inherit] flex-col pt-[calc(56.25vw_-_32px)] phone:pt-8">
         <div className="mt-auto pb-4 pt-2 phone:pb-7 wide:pb-10 wide:pt-4">
-          <p className="mb-2 text-xs text-quiet phone:text-[13px]">{live ? "Bezig" : next ? "Begint over" : "Nog geen sessie gepland"}</p>
+          {!live && <p className="mb-2 text-xs text-quiet phone:text-[13px]">{next ? "Begint over" : "Nog geen sessie gepland"}</p>}
           <Countdown session={next} now={now} />
           {next?.game && (
             <>

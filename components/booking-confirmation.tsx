@@ -14,7 +14,7 @@ export default function BookingConfirmation({ group, start, sessionName }: { gro
       <div className="p-6 phone:p-[60px]">
         <span className="mb-8 grid size-16 place-items-center rounded-full border border-control bg-raised text-brand"><CheckCheck size={36} /></span>
         <Eyebrow>SESSIE INGEPLAND</Eyebrow>
-        <h1 className="my-5 text-5xl font-semibold leading-none tracking-[-3px] phone:text-[76px]">Staat in<br /><em className="not-italic text-brand">de agenda.</em></h1>
+        <h1 className="my-5 text-5xl font-semibold leading-none tracking-[-3px] phone:text-[76px]"><em className="not-italic text-brand">Ingepland.</em></h1>
         {sessionName && <p className="text-[17px] text-quiet">{sessionName}</p>}
         <div className="my-8 grid w-fit min-w-[250px] gap-3 rounded-lg border border-dashed border-control bg-surface/80 p-5 text-[11px] text-quiet">
           <span>{formatDate(start, { weekday: "long", day: "numeric", month: "long" })}</span>
