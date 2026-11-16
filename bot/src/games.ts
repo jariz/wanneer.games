@@ -1,11 +1,11 @@
-import { igdbQuery, searchClause } from "../../shared/igdb.ts";
+import { igdbQuery, rankSearchResults, searchClause } from "../../shared/igdb.ts";
 import { env } from "./env.ts";
 
 export type Game = { name: string; igdbGameId?: number; slug?: string };
 
-type IgdbGame = { id: number; name: string; slug: string; first_release_date?: number };
+type IgdbGame = { id: number; name: string; slug: string; first_release_date?: number; total_rating_count?: number };
 
-const FIELDS = "fields name,slug,first_release_date;";
+const FIELDS = "fields name,slug,first_release_date,total_rating_count;";
 const CHOICE_PREFIX = "igdb:";
 
 const query = async (clause: string, timeoutMs?: number): Promise<IgdbGame[]> => {
@@ -26,10 +26,10 @@ const toGame = (game: IgdbGame): Game => ({
 
 // Discord drops autocomplete answers after three seconds
 export const gameChoices = async (input: string) => {
-  const clause = searchClause(input, 25);
+  const clause = searchClause(input, 60);
   if (!clause) return [];
   const games = await query(clause, 2500);
-  return games.map((game) => {
+  return rankSearchResults(games, input, 25).map((game) => {
     const year = game.first_release_date
       ? new Date(game.first_release_date * 1000).getUTCFullYear()
       : undefined;

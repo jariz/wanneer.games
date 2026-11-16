@@ -1,6 +1,6 @@
 import "server-only";
 import { env } from "@/env";
-import { igdbQuery, searchClause } from "@/shared/igdb";
+import { igdbQuery, rankSearchResults, searchClause } from "@/shared/igdb";
 import type { Game } from "./game-types";
 
 // Game IDs define the rotation; artwork is always resolved through IGDB.
@@ -94,16 +94,16 @@ function backgroundArtworks(gameId: number, artworks: Artwork[] = [], screenshot
   return [...filtered, ...(additionalArtworks.get(gameId) ?? []).map((image_id) => ({ image_id }))];
 }
 
-async function gameQuery(query: string): Promise<Game[]> {
+async function gameQuery(query: string, search?: string): Promise<Game[]> {
   try {
-    const data = await igdbQuery<{ id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: Artwork[] }>(
-      `${fields} ${query}`,
+    const data = await igdbQuery<{ id: number; name: string; total_rating_count?: number; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: Artwork[] }>(
+      `${search ? fields.replace("fields ", "fields total_rating_count,") : fields} ${query}`,
       { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
       { init: { next: { revalidate: 3600 } } },
     );
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
-    return data.map((game) => {
+    return (search ? rankSearchResults(data, search, 12) : data).map((game) => {
       const artworks = [...new Set(backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => image(art.image_id, "t_1080p")!))];
       return {
         id: game.id,
@@ -122,8 +122,8 @@ export async function getGameRotation() {
 }
 
 export async function searchGames(query: string) {
-  const clause = searchClause(query, 12);
-  return clause ? gameQuery(clause) : [];
+  const clause = searchClause(query, 60);
+  return clause ? gameQuery(clause, query) : [];
 }
 
 export async function getGame(id: number) {

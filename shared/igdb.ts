@@ -58,3 +58,16 @@ export const searchClause = (query: string, limit: number): string | undefined =
   if (safe.length < 2) return;
   return `search ${JSON.stringify(safe)}; limit ${limit};`;
 };
+
+export function rankSearchResults<T extends { name: string; total_rating_count?: number }>(
+  games: T[], query: string, limit: number,
+): T[] {
+  const normalize = (value: string) => value.normalize("NFKC").trim().toLocaleLowerCase("en");
+  const term = normalize(query);
+  // Keep IGDB relevance, with a capped logarithmic boost for widely rated games.
+  return games.map((game, index) => ({
+    game,
+    score: (normalize(game.name) === term ? 1000 : 0) - index +
+      Math.min(20, Math.log10(1 + Math.max(0, game.total_rating_count ?? 0)) * 5),
+  })).sort((a, b) => b.score - a.score).slice(0, limit).map(({ game }) => game);
+}
