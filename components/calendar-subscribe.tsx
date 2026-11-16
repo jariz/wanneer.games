@@ -48,7 +48,7 @@ export default function CalendarSubscribe({ group, compact = false }: { group: C
       <DialogTrigger
         className={compact
           ? buttonVariants({ variant: "secondary" })
-          : "glass relative flex min-h-[240px] flex-col items-start overflow-hidden rounded-xl border border-glass-edge p-6 text-left transition duration-300 hover:-translate-y-[3px] hover:bg-white/5 phone:min-h-[278px]"}
+          : "glass relative flex min-h-[240px] flex-col items-start overflow-hidden rounded-xl border border-glass-edge p-6 text-left transition duration-300 hover:bg-white/5 phone:min-h-[278px]"}
         aria-label={compact ? "Agenda koppelen" : "Koppel je agenda"}
         data-lens={compact ? undefined : ""}
       >
@@ -90,7 +90,7 @@ export default function CalendarSubscribe({ group, compact = false }: { group: C
         </div>
         <FinePrint>Je agenda-app bepaalt zelf hoe vaak hij ververst, dus nieuwe sessies kunnen er pas na een paar uur in staan.</FinePrint>
         <p className="min-h-2.5 text-[10px] text-quiet" role="status">
-          {failed ? "Kopiëren lukt niet. Selecteer de link hieronder." : copied ? "Abonnementslink gekopieerd." : ""}
+          {failed ? "Kopiëren lukt niet. Selecteer de link hieronder." : ""}
         </p>
         {failed && <code className="break-all text-[10px]">{url}</code>}
         <Button variant="link" size="none" render={<a href={`/${group}/ical.ics`} download />}>
