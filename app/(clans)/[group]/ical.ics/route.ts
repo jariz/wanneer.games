@@ -33,7 +33,8 @@ export async function GET(
         startInputType: "utc",
         duration: { hours: 3 },
         title: `${getEmoji(group)} ${booking.game?.trim() || "Gamesessie"}`,
-        organizer: { name: "wanneer.games", email: "jarizw+wanneer@gmail.com" },
+        // A personal address here makes subscribers' calendars treat the events as that person's own.
+        organizer: { name: "wanneer.games", email: "games@wanneer.games" },
       }),
     );
 
