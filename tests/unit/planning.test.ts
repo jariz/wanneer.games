@@ -15,7 +15,6 @@ vi.mock("@/lib/games", () => ({ searchGames: vi.fn() }));
 vi.mock("@/lib/planning", () => ({
   getAvailability: async () => mocks.slots,
   validPlanningMonth: () => true,
-  planningTimeZone: "Europe/Amsterdam",
 }));
 
 import { createHmac } from "node:crypto";

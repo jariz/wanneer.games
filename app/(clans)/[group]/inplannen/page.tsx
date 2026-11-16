@@ -8,7 +8,8 @@ import { PlanningButton } from "@/components/planning-access";
 import { clans, isClan } from "@/lib/clans";
 import { getGameRotation } from "@/lib/games";
 import { hasPlanningAccess } from "@/lib/planning-auth";
-import { currentPlanningMonth, getAvailability, planningTimeZone } from "@/lib/planning";
+import { currentPlanningMonth, getAvailability } from "@/lib/planning";
+import { amsterdam } from "@/lib/session-display";
 
 export default async function PlanningPage({ params }: { params: Promise<{ group: string }> }) {
   const { group } = await params;
@@ -39,8 +40,8 @@ export default async function PlanningPage({ params }: { params: Promise<{ group
       initialMonth={month}
       initialSlots={initialSlots}
       games={games}
-      today={formatInTimeZone(new Date(), planningTimeZone, "yyyy-MM-dd")}
-      maxDate={formatInTimeZone(addMonths(new Date(), 3), planningTimeZone, "yyyy-MM-dd")}
+      today={formatInTimeZone(new Date(), amsterdam, "yyyy-MM-dd")}
+      maxDate={formatInTimeZone(addMonths(new Date(), 3), amsterdam, "yyyy-MM-dd")}
     />
   );
 }

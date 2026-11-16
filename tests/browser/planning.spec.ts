@@ -74,14 +74,12 @@ test("planner calendar, game artwork, and agent actions work without creating a 
   expect(result.refused.error?.message).toContain("Maakt een echte Cal.com-afspraak");
   await expect(page.getByRole("combobox", { name: "Game" })).toHaveValue("Valheim met de ploeg");
   expect(errors).toEqual([]);
-  await page.screenshot({ path: "/private/var/folders/tg/txscpxj95nd6cgkxp9hl6ylc0000gn/T/opencode/wanneer-planner.png", fullPage: true, animations: "disabled" });
 });
 
 test("mobile lobby fits and subscription dialog closes", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: "/private/var/folders/tg/txscpxj95nd6cgkxp9hl6ylc0000gn/T/opencode/wanneer-mobile.png", fullPage: true, animations: "disabled" });
   await page.getByRole("button", { name: "Koppel je agenda", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("link", { name: /Google Agenda/ })).toHaveAttribute("href", /cid=/);

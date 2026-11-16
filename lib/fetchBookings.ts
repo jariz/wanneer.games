@@ -2,6 +2,7 @@
 
 import { env } from "@/env";
 import eventTypeMap from "@/shared/eventTypeMap";
+import { amsterdam } from "./session-display";
 import { addMonths, startOfDay } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
@@ -19,10 +20,9 @@ interface BookingResponse {
 }
 
 const fetchBookings = async (group: string, allBookings = false) => {
-  const timeZone = "Europe/Amsterdam";
-  const today = startOfDay(toZonedTime(new Date(), timeZone));
-  const afterStart = fromZonedTime(today, timeZone).toISOString();
-  const beforeEnd = fromZonedTime(addMonths(today, 1), timeZone).toISOString();
+  const today = startOfDay(toZonedTime(new Date(), amsterdam));
+  const afterStart = fromZonedTime(today, amsterdam).toISOString();
+  const beforeEnd = fromZonedTime(addMonths(today, 1), amsterdam).toISOString();
   const fetchStatus = async (status: "upcoming" | "past") => {
     const data: BookingResponse["data"] = [];
     const take = 100;

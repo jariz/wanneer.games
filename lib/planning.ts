@@ -4,25 +4,25 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { env } from "@/env";
 import eventTypeMap from "@/shared/eventTypeMap";
 import type { Clan } from "./clans";
+import { amsterdam } from "./session-display";
 
-export const planningTimeZone = "Europe/Amsterdam";
 
 export function currentPlanningMonth() {
-  return formatInTimeZone(new Date(), planningTimeZone, "yyyy-MM");
+  return formatInTimeZone(new Date(), amsterdam, "yyyy-MM");
 }
 
 export function validPlanningMonth(month: string) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return false;
   const current = currentPlanningMonth();
-  const latest = formatInTimeZone(addMonths(new Date(), 3), planningTimeZone, "yyyy-MM");
+  const latest = formatInTimeZone(addMonths(new Date(), 3), amsterdam, "yyyy-MM");
   return month >= current && month <= latest;
 }
 
 export async function getAvailability(group: Clan, month: string) {
   if (!validPlanningMonth(month)) throw new Error("Ongeldige maand.");
-  const start = fromZonedTime(`${month}-01T00:00:00`, planningTimeZone);
+  const start = fromZonedTime(`${month}-01T00:00:00`, amsterdam);
   const nextMonth = addMonths(new Date(`${month}-01T12:00:00Z`), 1).toISOString().slice(0, 7);
-  const end = fromZonedTime(`${nextMonth}-01T00:00:00`, planningTimeZone);
+  const end = fromZonedTime(`${nextMonth}-01T00:00:00`, amsterdam);
   const params = new URLSearchParams({
     eventTypeId: String(eventTypeMap[group]),
     startTime: new Date(Math.max(start.getTime(), Date.now())).toISOString(),

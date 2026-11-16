@@ -6,7 +6,8 @@ import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 import { isClan } from "@/lib/clans";
 import { allowPlanningAttempt, grantPlanningAccess, hasPlanningAccess, validPassword } from "@/lib/planning-auth";
-import { getAvailability, planningTimeZone, validPlanningMonth } from "@/lib/planning";
+import { getAvailability, validPlanningMonth } from "@/lib/planning";
+import { amsterdam } from "@/lib/session-display";
 import createBooking from "@/shared/createBooking";
 import { searchGames } from "@/lib/games";
 
@@ -49,7 +50,7 @@ export async function planSession(group: string, input: unknown) {
   const parsed = bookingSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: "Controleer je datum en game (maximaal 120 tekens)." };
   const { start, game, igdbGameId } = parsed.data;
-  const month = formatInTimeZone(new Date(start), planningTimeZone, "yyyy-MM");
+  const month = formatInTimeZone(new Date(start), amsterdam, "yyyy-MM");
   if (new Date(start).getTime() <= Date.now() || !validPlanningMonth(month)) {
     return { ok: false as const, message: "Kies een toekomstig tijdstip binnen drie maanden." };
   }

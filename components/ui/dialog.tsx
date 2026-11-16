@@ -36,4 +36,4 @@ function DialogDescription({ className, ...props }: Styled<typeof DialogDescript
   return <DialogDescriptionPrimitive className={cn("mb-6 text-xs leading-relaxed text-quiet", className)} {...props} />;
 }
 
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger };
+export { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger };

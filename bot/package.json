@@ -12,7 +12,6 @@
     "@t3-oss/env-core": "^0.13.10",
     "better-sqlite3": "^11.0.0",
     "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
     "discord.js": "^14.16.0",
     "drizzle-orm": "^0.38.0",
     "zod": "^4.0.0"
