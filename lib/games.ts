@@ -28,21 +28,38 @@ const rotation = [
   242408, // Counter-Strike 2
   348330, // Forza Horizon 6
   314239, // RoadCraft
+  214417, // The Finals
+  52189, // Grand Theft Auto VI
+  26401, // Star Wars Battlefront II (2017)
+  211196, // Call to Arms: Gates of Hell - Ostfront
+  397811, // Machine Party
+  281275, // Buckshot Roulette
+  3225, // No Man's Sky
+  119171, // Baldur's Gate III
 ];
-const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.alpha_channel,artworks.width,artworks.height,screenshots.image_id;";
+const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height;";
 
-type Artwork = { image_id: string; artwork_type?: number; alpha_channel?: boolean; width?: number; height?: number };
+type Artwork = { image_id: string; artwork_type?: number; width?: number; height?: number };
 
 // IGDB artwork types that work as a background: key art without logo, artwork, concept art, historical artwork.
 // Logos, icons and covers are left out.
 const backgroundTypes = [1, 2, 4, 15];
 
+// Artworks IGDB types as plain art that still don't work as a background.
+const excludedArtworks = new Set([
+  "ar7s2", // Age of Empires IV: logo card
+  "ar6i4l", "ar6i4m", "ar6i4n", // Grand Theft Auto VI: logo over the art
+  "ar4rk", "ar4rl", "ar4rn", // Star Wars Battlefront II: logo over the art
+  "ar5rh3", // The Finals: logo mark
+  "ar6hoy", // Buckshot Roulette: almost entirely black
+]);
+
 // Picks a different usable artwork on each call, so a game's background varies between visits.
 function backgroundArtwork(artworks: Artwork[] = []) {
   const usable = artworks
-    .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1))
-    // Transparent images are logos even when typed as artwork; portrait images don't fill the hero.
-    .filter((art) => !art.alpha_channel && (art.width ?? 16) / (art.height ?? 9) >= 1.3);
+    .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1) && !excludedArtworks.has(art.image_id))
+    // IGDB's alpha_channel flag is set on plenty of opaque artwork, so only shape is checked: square or portrait images don't fill the hero.
+    .filter((art) => (art.width ?? 16) / (art.height ?? 9) >= 1.3);
   return usable[Math.floor(Math.random() * usable.length)];
 }
 
@@ -67,14 +84,14 @@ async function gameQuery(query: string): Promise<Game[]> {
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return [];
-    const data: { id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: { image_id: string }[] }[] = await response.json();
+    const data: { id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[] }[] = await response.json();
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
     return data.map((game) => ({
       id: game.id,
       name: game.name,
       cover: image(game.cover?.image_id, "t_cover_big"),
-      artwork: image(backgroundArtwork(game.artworks)?.image_id ?? game.screenshots?.[0]?.image_id, "t_1080p"),
+      artwork: image(backgroundArtwork(game.artworks)?.image_id, "t_1080p"),
     }));
   } catch { return []; }
 }
