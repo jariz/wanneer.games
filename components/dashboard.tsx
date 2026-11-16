@@ -16,7 +16,7 @@ export default function Dashboard({ group, sessions, initialNow }: { group: Clan
     <div className="animate-page-in">
       <h1 className="sr-only">Wanneer games?</h1>
       <SessionHero next={upcoming[0]} now={now} />
-      <PageContainer className="grid grid-cols-1 gap-6 phone:grid-cols-[minmax(0,1fr)_230px] phone:gap-5 desktop:grid-cols-[minmax(0,1fr)_265px] desktop:gap-[30px]">
+      <PageContainer className="grid grid-cols-1 gap-6 pt-4 phone:grid-cols-[minmax(0,1fr)_230px] phone:gap-5 desktop:grid-cols-[minmax(0,1fr)_265px] desktop:gap-[30px]">
         <Agenda sessions={upcoming} />
         <CalendarSubscribe group={group} />
       </PageContainer>

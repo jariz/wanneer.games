@@ -12,7 +12,7 @@ function Countdown({ session, now }: { session: Session | undefined; now: number
   const timing = sessionTiming(session, now);
   if (!session) return <div className="my-6 text-5xl font-semibold tracking-tight text-quiet">Nog niets<br />ingepland.</div>;
   if (timing.live) return (
-    <div className="mb-7 mt-3 text-[54px] font-semibold leading-none tracking-[-3px] phone:text-[73px]">
+    <div className="mb-4 mt-3 text-[54px] phone:mb-7 font-semibold leading-none tracking-[-3px] phone:text-[73px]">
       We zijn <em className="not-italic text-brand">live.</em>
       <span className="mt-4 flex items-center gap-2.5 text-sm font-normal tracking-normal text-quiet"><Headphones size={20} /> Tijd om in te loggen.</span>
     </div>
@@ -21,7 +21,7 @@ function Countdown({ session, now }: { session: Session | undefined; now: number
     ? [{ value: timing.days, label: "DAGEN" }, { value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }]
     : [{ value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }, { value: timing.ticks, label: "SECONDEN" }];
   return (
-    <div className="mb-7 flex w-fit items-start gap-[26px] phone:gap-[34px]" aria-label={`Nog ${Number(timing.days)} dagen, ${Number(timing.hours)} uur en ${Number(timing.minutes)} minuten`}>
+    <div className="mb-4 flex w-fit items-start gap-[26px] phone:mb-7 phone:gap-[34px]" aria-label={`Nog ${Number(timing.days)} dagen, ${Number(timing.hours)} uur en ${Number(timing.minutes)} minuten`}>
       {units.map((unit, index) => (
         <div className="relative flex flex-col" key={unit.label}>
           {index > 0 && <span className="absolute -left-5 top-1 text-[40px] font-extralight text-quiet/70 phone:-left-[25px] phone:top-2 phone:text-[55px] wide:top-4" aria-hidden="true">:</span>}
@@ -46,7 +46,7 @@ function ArtworkSwitcher() {
   const { artwork, active, step } = useBackdrop();
   if (!active || artwork.length < 2) return null;
   return (
-    <div className="flex items-center gap-1 self-end phone:self-auto">
+    <div className="flex items-center gap-1">
       <span className="mr-2.5 grid max-w-[160px] gap-1 text-right text-[9px] text-quiet">
         <span className="hidden font-mono text-[6px] tracking-wider phone:block">ACHTERGROND</span>
         {active.name}
@@ -60,9 +60,9 @@ function ArtworkSwitcher() {
 export default function SessionHero({ next, now }: { next: Session | undefined; now: number }) {
   const live = sessionTiming(next, now).live;
   return (
-    <section className="relative min-h-[max(420px,calc(100svh_-_184px))] phone:min-h-[max(460px,calc(100svh_-_226px))]" aria-label="Volgende sessie" data-testid="session-hero">
-      <PageContainer className="relative flex min-h-[inherit] flex-col">
-        <div className="mt-auto pb-7 pt-2 wide:pb-10 wide:pt-4">
+    <section className="relative min-h-[56.25vw] phone:min-h-[max(460px,calc(100svh_-_226px))]" aria-label="Volgende sessie" data-testid="session-hero">
+      <PageContainer className="relative flex min-h-[inherit] flex-col pt-[calc(56.25vw_-_32px)] phone:pt-8">
+        <div className="mt-auto pb-4 pt-2 phone:pb-7 wide:pb-10 wide:pt-4">
           <p className="mb-2 text-xs text-quiet phone:text-[13px]">{live ? "Bezig" : next ? "Begint over" : "Nog geen sessie gepland"}</p>
           <Countdown session={next} now={now} />
           {next?.game && (
@@ -72,7 +72,7 @@ export default function SessionHero({ next, now }: { next: Session | undefined; 
             </>
           )}
         </div>
-        <div className="flex min-h-12 flex-col items-start justify-between gap-5 border-t border-control/40 pt-5 phone:flex-row phone:items-center">
+        <div className="flex min-h-12 items-center justify-between gap-3 border-t border-control/40 pt-4 phone:gap-5 phone:pt-5">
           {next
             ? <SessionMeta session={next} />
             : <PlanningButton label="Plan de eerste sessie"><Plus size={16} />Plan de eerste sessie<ArrowRight size={16} /></PlanningButton>}
