@@ -11,6 +11,7 @@ export const addSessionOptions = (builder: SlashCommandBuilder) =>
         .setName("game")
         .setDescription("Welk spel gaan we spelen?")
         .setRequired(false)
+        .setAutocomplete(true)
     )
     .addStringOption((option) =>
       option
@@ -27,5 +28,5 @@ export const addSessionOptions = (builder: SlashCommandBuilder) =>
 
 export const getSessionOptions = (interaction: ChatInputCommandInteraction) => ({
   group: interaction.options.getString("group") ?? "kiwis",
-  game: interaction.options.getString("game") ?? undefined,
+  game: interaction.options.getString("game"),
 });

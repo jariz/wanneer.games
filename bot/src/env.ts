@@ -7,6 +7,9 @@ export const env = createEnv({
     DISCORD_CLIENT_ID: z.string().min(1),
     NEXT_CAL_API_KEY: z.string().min(1),
     NEXT_INVALIDATE_URL: z.string().url(),
+    // Without these the game option still works, just without IGDB suggestions
+    NEXT_TWITCH_CLIENT_ID: z.string().min(1).optional(),
+    NEXT_TWITCH_CLIENT_SECRET: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
 });

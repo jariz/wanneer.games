@@ -24,6 +24,14 @@ export const parseQuestion = (
   return group ? { group, game: match[2] } : undefined;
 };
 
+// Polls can't hold hidden data, so the IGDB game travels as a link above the
+// poll. The angle brackets keep Discord from adding a preview.
+export const buildGameLink = (name: string, slug: string) =>
+  `🎮 [${name.replace(/[[\]]/g, "")}](<https://www.igdb.com/games/${slug}>)`;
+
+export const parseGameSlug = (content: string): string | undefined =>
+  content.match(/igdb\.com\/games\/([a-z0-9-]+)/)?.[1];
+
 export const parseSlot = (text: string, createdAt: number): Date | undefined => {
   const first = Math.ceil(createdAt / SLOT_STEP_MS) * SLOT_STEP_MS;
   for (let t = first; t < createdAt + SLOT_SEARCH_MS; t += SLOT_STEP_MS) {

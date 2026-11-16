@@ -10,7 +10,14 @@ import {
 } from "discord.js";
 import { formatSlot } from "./slotPicker.ts";
 import { bookSlot } from "./booking.ts";
-import { buildQuestion, parseQuestion, parseSlot } from "./pollFormat.ts";
+import {
+  buildGameLink,
+  buildQuestion,
+  parseGameSlug,
+  parseQuestion,
+  parseSlot,
+} from "./pollFormat.ts";
+import { gameBySlug, type Game } from "../games.ts";
 
 const POLL_DURATION_HOURS = 24;
 
@@ -30,12 +37,13 @@ export const createPoll = async (
   interaction: ChatInputCommandInteraction,
   channel: SendableChannels,
   group: string,
-  game: string | undefined,
+  game: Game | null,
   selectedSlots: Date[],
 ): Promise<void> => {
   const pollMessage = await channel.send({
+    ...(game?.slug && { content: buildGameLink(game.name, game.slug) }),
     poll: {
-      question: { text: buildQuestion(group, game) },
+      question: { text: buildQuestion(group, game?.name) },
       answers: selectedSlots.map((slot) => ({
         text: formatSlot(slot),
       })),
@@ -134,8 +142,13 @@ export const handlePollResult = async (message: Message): Promise<void> => {
     return;
   }
 
+  const slug = parseGameSlug(pollMessage.content);
+  const game: Game | null = parsed.game
+    ? { name: parsed.game, igdbGameId: slug ? (await gameBySlug(slug))?.igdbGameId : undefined }
+    : null;
+
   try {
-    await bookSlot(channel, parsed.group, slot, parsed.game);
+    await bookSlot(channel, parsed.group, slot, game);
   } catch (err) {
     console.error("Failed to create booking:", err);
     await channel.send(`❌ Kon sessie niet inplannen: ${String(err)}`);

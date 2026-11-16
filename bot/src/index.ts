@@ -3,6 +3,7 @@ import { env } from "./env.ts";
 import * as wanneer from "./commands/wanneer.ts";
 import * as inplannen from "./commands/inplannen.ts";
 import { cancelPoll, finishPoll, handlePollResult } from "./flows/pollManager.ts";
+import { gameChoices } from "./games.ts";
 
 const commands = [wanneer, inplannen];
 
@@ -19,6 +20,15 @@ client.on(Events.MessageCreate, (message) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isAutocomplete()) {
+    const focused = interaction.options.getFocused(true);
+    if (focused.name !== "game") return;
+    await interaction
+      .respond(await gameChoices(focused.value))
+      .catch(console.error);
+    return;
+  }
+
   if (interaction.isChatInputCommand()) {
     const command = commands.find((c) => c.data.name === interaction.commandName);
     await command?.execute(interaction).catch(console.error);

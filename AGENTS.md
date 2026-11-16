@@ -41,7 +41,8 @@ tag with ten-minute revalidation. Successful planning invalidates that tag.
 
 Dates and booking windows use `Europe/Amsterdam`. `shared/` contains Cal
 helpers used by both the website and Discord bot. `lib/games.ts` resolves
-game artwork dynamically through IGDB with Twitch OAuth.
+game artwork dynamically through IGDB with Twitch OAuth; the IGDB client in
+`shared/igdb.ts` also backs the bot's game autocomplete.
 
 Environment keys are documented in `.env.dist`. Clan planning passwords need
 at least four characters and aren't case-sensitive; the rate-limited unlock form
@@ -57,7 +58,8 @@ Build from the repository root:
 
 The bot keeps no state. `/wanneer` polls are finished from Discord's poll result
 message, reading group, game and slot back from the poll itself; polls that end
-while the bot is offline are not booked. `/inplannen` books directly.
+while the bot is offline are not booked; the IGDB game travels as a link above
+the poll. `/inplannen` books directly.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildQuestion, parseQuestion, parseSlot } from "../../src/flows/pollFormat.ts";
+import {
+  buildGameLink,
+  buildQuestion,
+  parseGameSlug,
+  parseQuestion,
+  parseSlot,
+} from "../../src/flows/pollFormat.ts";
 import { formatSlot } from "../../src/flows/slotPicker.ts";
 
 describe("parseQuestion", () => {
@@ -17,6 +23,20 @@ describe("parseQuestion", () => {
   it("ignores other polls", () => {
     expect(parseQuestion("Pizza of shoarma?")).toBeUndefined();
     expect(parseQuestion("🍕 Wanneer games?")).toBeUndefined();
+  });
+});
+
+describe("parseGameSlug", () => {
+  it("reads the slug back from the game link", () => {
+    const link = buildGameLink("Star Wars [Battlefront] II", "star-wars-battlefront-ii--1");
+    expect(link).toBe(
+      "🎮 [Star Wars Battlefront II](<https://www.igdb.com/games/star-wars-battlefront-ii--1>)",
+    );
+    expect(parseGameSlug(link)).toBe("star-wars-battlefront-ii--1");
+  });
+
+  it("returns undefined without a link", () => {
+    expect(parseGameSlug("")).toBeUndefined();
   });
 });
 

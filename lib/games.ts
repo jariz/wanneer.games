@@ -1,5 +1,6 @@
 import "server-only";
 import { env } from "@/env";
+import { igdbQuery, searchClause } from "@/shared/igdb";
 import type { Game } from "./game-types";
 
 // Game IDs define the rotation; artwork is always resolved through IGDB.
@@ -70,26 +71,11 @@ function backgroundArtwork(artworks: Artwork[] = []) {
 
 async function gameQuery(query: string): Promise<Game[]> {
   try {
-    const authParams = new URLSearchParams({
-      client_id: env.NEXT_TWITCH_CLIENT_ID,
-      client_secret: env.NEXT_TWITCH_CLIENT_SECRET,
-      grant_type: "client_credentials",
-    });
-    const auth = await fetch("https://id.twitch.tv/oauth2/token", {
-      method: "POST", body: authParams, next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!auth.ok) return [];
-    const { access_token: token } = await auth.json();
-    const response = await fetch("https://api.igdb.com/v4/games", {
-      method: "POST",
-      headers: { "Client-ID": env.NEXT_TWITCH_CLIENT_ID, Authorization: `Bearer ${token}` },
-      body: `${fields} ${query}`,
-      next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) return [];
-    const data: { id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[] }[] = await response.json();
+    const data = await igdbQuery<{ id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[] }>(
+      `${fields} ${query}`,
+      { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
+      { init: { next: { revalidate: 3600 } } },
+    );
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
     return data.map((game) => ({
@@ -107,9 +93,8 @@ export async function getGameRotation() {
 }
 
 export async function searchGames(query: string) {
-  const safe = query.trim().slice(0, 80);
-  if (safe.length < 2) return [];
-  return gameQuery(`search ${JSON.stringify(safe)}; limit 12;`);
+  const clause = searchClause(query, 12);
+  return clause ? gameQuery(clause) : [];
 }
 
 export async function getGame(id: number) {
