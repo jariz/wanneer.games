@@ -52,6 +52,7 @@ const excludedArtworks = new Set([
   "ar4rk", "ar4rl", "ar4rn", // Star Wars Battlefront II: logo over the art
   "ar5rh3", // The Finals: logo mark
   "ar6hoy", // Buckshot Roulette: almost entirely black
+  "ar5vr3", // Forza Horizon 6: car on a white background
 ]);
 
 // Picks a different usable artwork on each call, so a game's background varies between visits.
