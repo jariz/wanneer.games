@@ -39,10 +39,10 @@ export default function SessionRow({ session }: { session: Session }) {
         <DetailLine icon={<CalendarDays size={19} />}>{fullDate}</DetailLine>
         <DetailLine icon={<Clock3 size={19} />}>{time}</DetailLine>
         <Button className="mt-5 w-full" onClick={() => copy(`${session.game ? `${session.game} — ` : ""}${fullDate}, ${time}\nhttps://wanneer.games`)}>
-          {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? "Gekopieerd!" : "Deel in de groepsapp"}
+          {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? "Gekopieerd!" : "Kopieer beschrijving"}
         </Button>
         <p role="status" className="min-h-2.5 text-[10px] text-quiet">
-          {failed ? "Kopiëren lukt niet. Deel de link wanneer.games handmatig." : copied ? "Sessie gekopieerd." : ""}
+          {failed ? "Kopiëren lukt niet. Deel de link wanneer.games handmatig." : copied && <span className="sr-only">Beschrijving gekopieerd.</span>}
         </p>
       </DialogContent>
     </Dialog>
