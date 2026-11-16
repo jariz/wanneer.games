@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
-import { isClan } from "@/lib/clans";
+import { isClan } from "@/shared/clans";
 import { allowPlanningAttempt, grantPlanningAccess, hasPlanningAccess, validPassword } from "@/lib/planning-auth";
 import { getAvailability, validPlanningMonth } from "@/lib/planning";
 import { amsterdam } from "@/lib/session-display";

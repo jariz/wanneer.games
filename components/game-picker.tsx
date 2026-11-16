@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Combobox, ComboboxClear, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxLabel, ComboboxList, ComboboxStatus, ComboboxTrigger } from "@ui-sdk/react/combobox";
 import { ChevronDown, Gamepad2, X } from "lucide-react";
 import { findPlanningGames } from "@/app/planning-actions";
-import type { Clan } from "@/lib/clans";
+import type { Clan } from "@/shared/clans";
 import type { Game } from "@/lib/game-types";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 

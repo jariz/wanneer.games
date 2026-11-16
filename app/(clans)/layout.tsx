@@ -1,5 +1,5 @@
 import AppShell from "@/components/app-shell";
-import { clans, type Clan } from "@/lib/clans";
+import { clans, type Clan } from "@/shared/clans";
 import fetchBookings from "@/lib/fetchBookings";
 import { getGame, getGameRotation } from "@/lib/games";
 import { hasPlanningAccess, planningConfigured } from "@/lib/planning-auth";

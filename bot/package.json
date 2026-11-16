@@ -10,16 +10,12 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.10",
-    "better-sqlite3": "^11.0.0",
     "date-fns": "^4.1.0",
     "discord.js": "^14.16.0",
-    "drizzle-orm": "^0.38.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^20",
-    "drizzle-kit": "^0.29.0",
     "typescript": "^5",
     "vitest": "^2.0.0"
   }

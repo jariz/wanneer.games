@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Dashboard from "@/components/dashboard";
 import fetchBookings from "@/lib/fetchBookings";
-import { isClan } from "@/lib/clans";
+import { isClan } from "@/shared/clans";
 
 export default async function Page({ params }: { params: Promise<{ group: string }> }) {
   const { group } = await params;

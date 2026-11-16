@@ -1,6 +1,6 @@
 "use client";
 
-import type { Clan } from "@/lib/clans";
+import type { Clan } from "@/shared/clans";
 import { useNow } from "@/hooks/use-now";
 import type { Session } from "@/lib/session-display";
 import Agenda from "./agenda";

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCheck } from "lucide-react";
-import { clans, type Clan } from "@/lib/clans";
+import { clans, type Clan } from "@/shared/clans";
 import { dateLabel, formatDate } from "@/lib/session-display";
 import CalendarSubscribe from "./calendar-subscribe";
 import { Button } from "./ui/button";

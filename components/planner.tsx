@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { loadPlanningMonth, planSession } from "@/app/planning-actions";
-import { clans, type Clan } from "@/lib/clans";
+import { clans, type Clan } from "@/shared/clans";
 import type { Game } from "@/lib/game-types";
 import { usePinnedBackdrop } from "./backdrop";
 import BookingConfirmation from "./booking-confirmation";

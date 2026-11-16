@@ -4,35 +4,23 @@ import {
 } from "discord.js";
 import { runSlotPicker } from "../flows/slotPicker.ts";
 import { createPoll } from "../flows/pollManager.ts";
+import { addSessionOptions, getSessionOptions } from "./options.ts";
 
-export const data = new SlashCommandBuilder()
-  .setName("wanneer")
-  .setDescription("Plan een game sessie in via een poll")
-  .addStringOption((option) =>
-    option
-      .setName("game")
-      .setDescription("Welk spel gaan we spelen?")
-      .setRequired(false)
-  )
-  .addStringOption((option) =>
-    option
-      .setName("group")
-      .setDescription("Welke groep? (standaard: kiwis)")
-      .setRequired(false)
-      .addChoices(
-        { name: "🥝 Kiwi's", value: "kiwis" },
-        { name: "🦔 Niglo's", value: "niglos" }
-      )
-  );
+export const data = addSessionOptions(
+  new SlashCommandBuilder()
+    .setName("wanneer")
+    .setDescription("Plan een game sessie in via een poll")
+);
 
 export async function execute(
   interaction: ChatInputCommandInteraction
 ): Promise<void> {
-  const group = interaction.options.getString("group") ?? "kiwis";
-  const game = interaction.options.getString("game") ?? undefined;
+  const { group, game } = getSessionOptions(interaction);
+  const channel = interaction.channel;
+  if (!channel?.isSendable()) return;
 
-  const selectedSlots = await runSlotPicker(interaction, group, game);
+  const selectedSlots = await runSlotPicker(interaction, group, "poll");
   if (!selectedSlots) return;
 
-  await createPoll(interaction, group, game, selectedSlots);
+  await createPoll(interaction, channel, group, game, selectedSlots);
 }

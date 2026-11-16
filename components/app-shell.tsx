@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import { Plus } from "lucide-react";
 import { SiYoutube } from "react-icons/si";
-import { clans, isClan, type Clan } from "@/lib/clans";
+import { clans, isClan, type Clan } from "@/shared/clans";
 import type { Game } from "@/lib/game-types";
 import { Backdrop, BackdropProvider } from "./backdrop";
 import { PlanningAccess, PlanningButton } from "./planning-access";

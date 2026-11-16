@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import type { Clan } from "./clans";
+import type { Clan } from "@/shared/clans";
 
 const lifetime = 30 * 24 * 60 * 60;
 

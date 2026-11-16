@@ -5,7 +5,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import LockedPage from "@/components/locked-page";
 import Planner from "@/components/planner";
 import { PlanningButton } from "@/components/planning-access";
-import { clans, isClan } from "@/lib/clans";
+import { clans, isClan } from "@/shared/clans";
 import { getGameRotation } from "@/lib/games";
 import { hasPlanningAccess } from "@/lib/planning-auth";
 import { currentPlanningMonth, getAvailability } from "@/lib/planning";

@@ -49,7 +49,10 @@ const groupByDay = (slots: Date[]): Map<string, number[]> => {
   return map;
 };
 
+export type PickerMode = "poll" | "book";
+
 const buildComponents = (
+  mode: PickerMode,
   allSlots: Date[],
   selectedIndices: number[],
   currentDayKey: string | null,
@@ -97,7 +100,7 @@ const buildComponents = (
   }
 
   // Row 3: Remove selected
-  if (selectedIndices.length > 0) {
+  if (mode === "poll" && selectedIndices.length > 0) {
     const removeSelect = new StringSelectMenuBuilder()
       .setCustomId("slot_remove")
       .setPlaceholder("Verwijder een tijd...")
@@ -115,7 +118,7 @@ const buildComponents = (
   // Row 4: Confirm button
   const confirmButton = new ButtonBuilder()
     .setCustomId("slot_confirm")
-    .setLabel("Maak poll")
+    .setLabel(mode === "poll" ? "Maak poll" : "Inplannen")
     .setStyle(ButtonStyle.Primary)
     .setDisabled(selectedIndices.length === 0);
   rows.push(new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton));
@@ -123,7 +126,11 @@ const buildComponents = (
   return rows;
 };
 
-const buildContent = (selectedIndices: number[], slots: Date[]) => {
+const buildContent = (mode: PickerMode, selectedIndices: number[], slots: Date[]) => {
+  if (mode === "book") {
+    if (selectedIndices.length === 0) return "Kies een dag en een tijd om in te plannen:";
+    return `**Gekozen:** ${formatSlot(slots[selectedIndices[0]])}\n\nKies een andere tijd, of bevestig:`;
+  }
   if (selectedIndices.length === 0) return "Kies een dag en selecteer tijden voor de poll:";
   const list = selectedIndices.map((i) => `• ${formatSlot(slots[i])}`).join("\n");
   return `**Geselecteerd:**\n${list}\n\nVoeg meer toe, verwijder, of bevestig:`;
@@ -132,7 +139,7 @@ const buildContent = (selectedIndices: number[], slots: Date[]) => {
 export const runSlotPicker = async (
   interaction: ChatInputCommandInteraction,
   group: string,
-  game: string | undefined
+  mode: PickerMode
 ): Promise<Date[] | null> => {
   await interaction.deferReply({ ephemeral: true });
 
@@ -151,8 +158,8 @@ export const runSlotPicker = async (
   let currentDayKey: string | null = null;
 
   const reply = await interaction.editReply({
-    content: buildContent(selectedIndices, allSlots),
-    components: buildComponents(allSlots, selectedIndices, currentDayKey, dayGroups),
+    content: buildContent(mode, selectedIndices, allSlots),
+    components: buildComponents(mode, allSlots, selectedIndices, currentDayKey, dayGroups),
   });
 
   const collector = reply.createMessageComponentCollector({
@@ -165,7 +172,8 @@ export const runSlotPicker = async (
       currentDayKey = selectInteraction.values[0];
     } else if (selectInteraction.customId === "slot_add") {
       const values = selectInteraction.values.map(Number);
-      selectedIndices = [...selectedIndices, ...values].sort((a, b) => a - b);
+      selectedIndices =
+        mode === "poll" ? [...selectedIndices, ...values].sort((a, b) => a - b) : values;
       currentDayKey = null;
     } else if (selectInteraction.customId === "slot_remove") {
       const values = selectInteraction.values.map(Number);
@@ -173,8 +181,8 @@ export const runSlotPicker = async (
     }
 
     await selectInteraction.update({
-      content: buildContent(selectedIndices, allSlots),
-      components: buildComponents(allSlots, selectedIndices, currentDayKey, dayGroups),
+      content: buildContent(mode, selectedIndices, allSlots),
+      components: buildComponents(mode, allSlots, selectedIndices, currentDayKey, dayGroups),
     });
   });
 
@@ -188,7 +196,7 @@ export const runSlotPicker = async (
     collector.stop();
 
     await buttonInteraction.update({
-      content: "✅ Poll wordt aangemaakt...",
+      content: mode === "poll" ? "✅ Poll wordt aangemaakt..." : "⏳ Sessie wordt ingepland...",
       components: [],
     });
 

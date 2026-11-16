@@ -6,7 +6,7 @@ import type { RenderProp } from "@ui-sdk/react/primitive";
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, CalendarPlus, Check, Copy, Link2 } from "lucide-react";
 import { PiMicrosoftOutlookLogoFill } from "react-icons/pi";
 import { SiApple, SiGooglecalendar } from "react-icons/si";
-import { clans, type Clan } from "@/lib/clans";
+import { clans, type Clan } from "@/shared/clans";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { Button, buttonVariants } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "./ui/dialog";

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, LoaderCircle, RefreshCw } from "lucide-react";
-import type { Clan } from "@/lib/clans";
+import type { Clan } from "@/shared/clans";
 import type { Game } from "@/lib/game-types";
 import { dateLabel, formatDate } from "@/lib/session-display";
 import GamePicker, { type GameChoice } from "./game-picker";

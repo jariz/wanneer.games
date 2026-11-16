@@ -3,7 +3,7 @@ import { addMonths } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { env } from "@/env";
 import eventTypeMap from "@/shared/eventTypeMap";
-import type { Clan } from "./clans";
+import type { Clan } from "@/shared/clans";
 import { amsterdam } from "./session-display";
 
 

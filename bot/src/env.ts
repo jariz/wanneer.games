@@ -7,7 +7,6 @@ export const env = createEnv({
     DISCORD_CLIENT_ID: z.string().min(1),
     NEXT_CAL_API_KEY: z.string().min(1),
     NEXT_INVALIDATE_URL: z.string().url(),
-    DATABASE_URL: z.string().min(1).default("./data/bot.db"),
   },
   runtimeEnv: process.env,
 });

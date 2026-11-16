@@ -1,10 +1,10 @@
-import { Client, Events, GatewayIntentBits, Message, REST, Routes, TextChannel } from "discord.js";
-import { eq } from "drizzle-orm";
+import { Client, Events, GatewayIntentBits, REST, Routes } from "discord.js";
 import { env } from "./env.ts";
-import { runMigrations, db } from "./db/index.ts";
-import { polls } from "./db/schema.ts";
-import { data as wanneerData, execute } from "./commands/wanneer.ts";
-import { finalizePoll, setBotClient, schedulePollFinalization } from "./flows/pollManager.ts";
+import * as wanneer from "./commands/wanneer.ts";
+import * as inplannen from "./commands/inplannen.ts";
+import { cancelPoll, finishPoll, handlePollResult } from "./flows/pollManager.ts";
+
+const commands = [wanneer, inplannen];
 
 const client = new Client({
   intents: [
@@ -14,13 +14,14 @@ const client = new Client({
   ],
 });
 
-runMigrations();
+client.on(Events.MessageCreate, (message) => {
+  handlePollResult(message).catch(console.error);
+});
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isChatInputCommand()) {
-    if (interaction.commandName === "wanneer") {
-      await execute(interaction).catch(console.error);
-    }
+    const command = commands.find((c) => c.data.name === interaction.commandName);
+    await command?.execute(interaction).catch(console.error);
     return;
   }
 
@@ -28,21 +29,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const [action, pollMessageId] = interaction.customId.split(":");
     if (!pollMessageId) return;
 
+    const channel = await client.channels
+      .fetch(interaction.channelId)
+      .catch(() => null);
+    if (!channel?.isSendable()) return;
+
     if (action === "poll_finish") {
       await interaction.update({
         content: "⏳ Poll wordt afgerond...",
         components: [],
       });
       try {
-        const result = await finalizePoll(pollMessageId, "manual");
-        if (result?.noVotes) {
-          await interaction.editReply({
-            content: "❌ Kan poll niet afronden: er zijn nog geen stemmen uitgebracht.",
-          });
-          return;
-        }
+        const result = await finishPoll(channel, pollMessageId);
         await interaction.editReply({
-          content: "✅ Poll is afgerond.",
+          content: {
+            ended: "✅ Poll is afgerond.",
+            noVotes: "❌ Kan poll niet afronden: er zijn nog geen stemmen uitgebracht.",
+            closed: "Poll is al afgelopen.",
+          }[result],
         });
       } catch (err) {
         console.error(err);
@@ -54,33 +58,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     if (action === "poll_cancel") {
-      const poll = await db.query.polls.findFirst({
-        where: eq(polls.pollMessageId, pollMessageId),
-      });
-      if (!poll || poll.status !== "active") return;
-
       await interaction.update({
         content: "⏳ Poll wordt geannuleerd...",
         components: [],
       });
-
       try {
-        const channel = interaction.channel;
-        if (!(channel instanceof TextChannel)) throw new Error("Channel is not a TextChannel or not found");
-        const pollMessage = await channel.messages.fetch(pollMessageId) as Message<true>;
-        await pollMessage.poll?.end();
-        await db
-          .update(polls)
-          .set({ status: "cancelled" })
-          .where(eq(polls.pollMessageId, pollMessageId));
-
+        const cancelled = await cancelPoll(channel, pollMessageId);
         await interaction.editReply({
-          content: "❌ Poll geannuleerd.",
+          content: cancelled ? "❌ Poll geannuleerd." : "Poll is al afgelopen.",
         });
-
-        await channel.send(
-          "❌ Poll geannuleerd. Gebruik /wanneer om een nieuwe poll te starten."
-        );
       } catch (err) {
         console.error(err);
         await interaction.editReply({
@@ -91,35 +77,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-const recoverPolls = async () => {
-  const activePolls = await db.query.polls.findMany({
-    where: eq(polls.status, "active"),
-  });
-
-  const now = Date.now();
-
-  for (const poll of activePolls) {
-    if (poll.expiresAt <= now) {
-      console.log(`Recovering expired poll ${poll.pollMessageId}`);
-      await finalizePoll(poll.pollMessageId, "expired").catch(console.error);
-    } else {
-      console.log(`Rescheduling poll ${poll.pollMessageId}`);
-      schedulePollFinalization(poll.pollMessageId, poll.expiresAt);
-    }
-  }
-};
-
-client.once("ready", async (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
-  setBotClient(c);
 
   const rest = new REST().setToken(env.DISCORD_TOKEN);
   await rest.put(Routes.applicationCommands(env.DISCORD_CLIENT_ID), {
-    body: [wanneerData.toJSON()],
+    body: commands.map((c) => c.data.toJSON()),
   });
   console.log("Slash commands registered.");
-
-  await recoverPolls();
 });
 
 client.login(env.DISCORD_TOKEN);

@@ -3,39 +3,39 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
-  Client,
   Message,
+  MessageType,
   PollLayoutType,
-  TextChannel,
+  type SendableChannels,
 } from "discord.js";
-import { eq } from "drizzle-orm";
-import { db } from "../db/index.ts";
-import { polls } from "../db/schema.ts";
 import { formatSlot } from "./slotPicker.ts";
-import createBooking from "../../../shared/createBooking.ts";
-import { env } from "../env.ts";
+import { bookSlot } from "./booking.ts";
+import { buildQuestion, parseQuestion, parseSlot } from "./pollFormat.ts";
 
 const POLL_DURATION_HOURS = 24;
 
-let botClient: Client;
-export const setBotClient = (client: Client) => {
-  botClient = client;
+const fetchPollMessage = async (
+  channel: SendableChannels,
+  pollMessageId: string,
+): Promise<Message | undefined> => {
+  const message = await channel.messages
+    .fetch({ message: pollMessageId, force: true })
+    .catch(() => undefined);
+  if (message?.poll && message.author.id === channel.client.user.id) {
+    return message;
+  }
 };
 
 export const createPoll = async (
   interaction: ChatInputCommandInteraction,
+  channel: SendableChannels,
   group: string,
   game: string | undefined,
   selectedSlots: Date[],
 ): Promise<void> => {
-  const channel = interaction.channel as TextChannel;
-
-  const groupEmoji = group === "kiwis" ? "🥝" : "🦔";
-  const gameLabel = game ? ` - ${game}` : "";
-
   const pollMessage = await channel.send({
     poll: {
-      question: { text: `${groupEmoji} Wanneer games?${gameLabel}` },
+      question: { text: buildQuestion(group, game) },
       answers: selectedSlots.map((slot) => ({
         text: formatSlot(slot),
       })),
@@ -64,145 +64,80 @@ export const createPoll = async (
     content: "📊 Poll is gestart!",
     components: [row],
   });
-
-  const now = Date.now();
-  const expiresAt = now + POLL_DURATION_HOURS * 60 * 60 * 1000;
-
-  await db.insert(polls).values({
-    pollMessageId: pollMessage.id,
-    channelId: channel.id,
-    group,
-    game: game ?? null,
-    slots: JSON.stringify(selectedSlots.map((s) => s.toISOString())),
-    status: "active",
-    createdAt: now,
-    expiresAt,
-  });
-
-  schedulePollFinalization(pollMessage.id, expiresAt);
 };
 
-export const schedulePollFinalization = (
+// Ending the poll makes Discord post a result message, which
+// handlePollResult turns into a booking
+export const finishPoll = async (
+  channel: SendableChannels,
   pollMessageId: string,
-  expiresAt: number,
-): void => {
-  const delay = expiresAt - Date.now();
-  if (delay <= 0) return; // handled by startup recovery
-  setTimeout(() => finalizePoll(pollMessageId, "expired"), delay);
+): Promise<"ended" | "noVotes" | "closed"> => {
+  const pollMessage = await fetchPollMessage(channel, pollMessageId);
+  if (!pollMessage?.poll || pollMessage.poll.resultsFinalized) return "closed";
+
+  const totalVotes = pollMessage.poll.answers.reduce(
+    (sum, answer) => sum + (answer.voteCount ?? 0),
+    0,
+  );
+  if (totalVotes <= 0) return "noVotes";
+
+  await pollMessage.poll.end();
+  return "ended";
 };
 
-export const finalizePoll = async (
+// Deleting instead of ending, so Discord doesn't post a result to book
+export const cancelPoll = async (
+  channel: SendableChannels,
   pollMessageId: string,
-  reason: "expired" | "manual",
-): Promise<{ noVotes?: boolean } | void> => {
-  if (!botClient) {
-    console.error("finalizePoll called before bot client was initialized");
-    return;
+): Promise<boolean> => {
+  const pollMessage = await fetchPollMessage(channel, pollMessageId);
+  if (!pollMessage?.poll || pollMessage.poll.resultsFinalized) return false;
+
+  await pollMessage.delete();
+  await channel.send(
+    "❌ Poll geannuleerd. Gebruik /wanneer om een nieuwe poll te starten.",
+  );
+  return true;
+};
+
+export const handlePollResult = async (message: Message): Promise<void> => {
+  if (message.type !== MessageType.PollResult) return;
+  const { channel } = message;
+  const pollMessageId = message.reference?.messageId;
+  if (!pollMessageId || !channel.isSendable()) return;
+
+  const pollMessage = await fetchPollMessage(channel, pollMessageId);
+  const parsed = parseQuestion(pollMessage?.poll?.question.text);
+  if (!pollMessage?.poll || !parsed) return;
+
+  // Most votes wins; ties go to the earliest slot, which comes first
+  let winner: { text: string | null; voteCount: number } | undefined;
+  for (const answer of pollMessage.poll.answers.values()) {
+    if (answer.voteCount > (winner?.voteCount ?? 0)) winner = answer;
   }
 
-  const poll = await db.query.polls.findFirst({
-    where: eq(polls.pollMessageId, pollMessageId),
-  });
-
-  if (!poll || poll.status !== "active") return;
-
-  const channel = botClient.channels.cache.get(poll.channelId);
-  if (!(channel instanceof TextChannel)) {
-    console.error(
-      `Channel ${poll.channelId} is not a TextChannel or not found`,
-    );
-    return;
-  }
-  const pollMessage = (await channel.messages.fetch(
-    poll.pollMessageId,
-  )) as Message<true>;
-
-  if (reason === "manual") {
-    // Check vote counts before ending the poll
-    const answers = [...(pollMessage.poll?.answers.values() ?? [])];
-    const totalVotes = answers.reduce(
-      (sum, a) => sum + (a.voteCount ?? 0),
-      0,
-    );
-    if (totalVotes <= 0) {
-      return { noVotes: true };
-    }
-
-    await pollMessage.poll?.end();
-    // Refetch to get final vote counts after ending
-    const refreshed = (await channel.messages.fetch(
-      poll.pollMessageId,
-    )) as Message<true>;
-    return _processResults(poll, channel, refreshed);
-  }
-
-  const result = await _processResults(poll, channel, pollMessage);
-  if (result?.noVotes) {
+  if (!winner?.text) {
     await channel.send(
       "❌ Poll verlopen zonder stemmen. Gebruik /wanneer om een nieuwe poll te starten.",
     );
-    await db
-      .update(polls)
-      .set({ status: "cancelled" })
-      .where(eq(polls.pollMessageId, poll.pollMessageId));
-  }
-};
-
-const _processResults = async (
-  poll: typeof polls.$inferSelect,
-  channel: TextChannel,
-  pollMessage: Message<true>,
-): Promise<{ noVotes?: boolean }> => {
-  const slotIsos: string[] = JSON.parse(poll.slots);
-  const answers = [...(pollMessage.poll?.answers.values() ?? [])];
-
-  // Find winning slot: most votes; tie → earliest (lowest index = earliest since slots are sorted)
-  let winnerIndex = 0;
-  let maxVotes = -1;
-  for (let i = 0; i < answers.length; i++) {
-    if ((answers[i].voteCount ?? 0) > maxVotes) {
-      maxVotes = answers[i].voteCount ?? 0;
-      winnerIndex = i;
-    }
+    return;
   }
 
-  if (maxVotes <= 0) {
-    return { noVotes: true };
+  const slot = parseSlot(winner.text, pollMessage.createdTimestamp);
+  if (!slot) {
+    console.error(`Could not read a slot from poll answer "${winner.text}"`);
+    await channel.send(`❌ Kon de gekozen tijd niet lezen: ${winner.text}`);
+    return;
   }
-
-  const winningSlot = new Date(slotIsos[winnerIndex]);
+  if (slot.getTime() <= Date.now()) {
+    console.log(`Skipping poll ${pollMessageId}: ${slot.toISOString()} has passed`);
+    return;
+  }
 
   try {
-    await createBooking({
-      group: poll.group,
-      start: winningSlot,
-      game: poll.game ?? undefined,
-    });
-
-    await fetch(env.NEXT_INVALIDATE_URL, { method: "POST" });
+    await bookSlot(channel, parsed.group, slot, parsed.game);
   } catch (err) {
     console.error("Failed to create booking:", err);
     await channel.send(`❌ Kon sessie niet inplannen: ${String(err)}`);
-    return {};
   }
-
-  const formattedDate = winningSlot.toLocaleDateString("nl-NL", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Amsterdam",
-  });
-
-  await channel.send(
-    `✅ Ingepland! **${formattedDate}**${poll.game ? ` - ${poll.game}` : ""}`,
-  );
-
-  await db
-    .update(polls)
-    .set({ status: "completed" })
-    .where(eq(polls.pollMessageId, poll.pollMessageId));
-
-  return {};
 };

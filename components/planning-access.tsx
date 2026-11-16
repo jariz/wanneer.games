@@ -8,7 +8,7 @@ import { Button as ButtonPrimitive } from "@ui-sdk/react/button";
 import { createDialogController } from "@ui-sdk/react/dialog";
 import { KeyRound, LoaderCircle, LockKeyhole } from "lucide-react";
 import { unlockPlanning } from "@/app/planning-actions";
-import { clans, type Clan } from "@/lib/clans";
+import { clans, type Clan } from "@/shared/clans";
 import { Alert } from "./ui/alert";
 import { Button, buttonVariants } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "./ui/dialog";

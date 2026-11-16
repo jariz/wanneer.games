@@ -27,8 +27,8 @@ Next.js App Router with React 19, Tailwind and UI SDK. Pages live under
 `app/(clans)/[group]`; `/`, `/inplannen`, and `/ical.ics` rewrite to the `kiwis` clan.
 The `(clans)` layout renders the app shell once, above the `[group]` segment, so
 it stays mounted across clan switches; it picks the clan with `useParams`.
-Clan event type IDs live in `shared/eventTypeMap.ts`; display names in
-`lib/clans.ts`.
+Clan event type IDs live in `shared/eventTypeMap.ts`; display names and emoji
+in `shared/clans.ts` (used by the bot too).
 
 Styled building blocks live in `components/ui/` as shadcn-style wrappers
 around UI SDK parts (`cn` + `cva`, e.g. `Button`/`buttonVariants`). Don't
@@ -55,7 +55,9 @@ Local credentials belong in gitignored `.env.local`.
 Build from the repository root:
 `docker build -f bot/Dockerfile -t wanneer-games-bot .`
 
-Mount `/data` for SQLite persistence, e.g. `-v wanneer-bot-data:/data`.
+The bot keeps no state. `/wanneer` polls are finished from Discord's poll result
+message, reading group, game and slot back from the poll itself; polls that end
+while the bot is offline are not booked. `/inplannen` books directly.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
