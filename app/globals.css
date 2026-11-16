@@ -17,6 +17,8 @@
     --quiet: 170 200 182;
     --brand: 140 214 92;
     --radius: .5rem;
+    /* How much the WebGL glass leans towards the clan colour, 0 to 1. */
+    --glass-tint: 0.06;
   }
 
   /* :has() so the body background outside the app shell follows the clan too. */

@@ -16,6 +16,8 @@ uniform vec2 uResolution;
 uniform float uDpr;
 uniform vec4 uRegion;
 uniform vec3 uCanvas;
+uniform vec3 uBrand;
+uniform float uTint;
 uniform sampler2D uImageA;
 uniform sampler2D uImageB;
 uniform vec2 uSizeA;
@@ -121,7 +123,7 @@ void main() {
     frosted(p + shift * 0.85).b
   );
 
-  color = color * 1.05 + 0.006;
+  color = mix(color * 1.05 + 0.006, uBrand, uTint);
   float light = pow(max(dot(normal, normalize(vec2(-0.55, -0.85))), 0.0), 2.0);
   float rim = 1.0 - smoothstep(0.0, 2.5 * uDpr, edge);
   color += light * (rim * 0.32 + bend * 0.07) * uRims[hit];
@@ -167,7 +169,7 @@ export function createLensRenderer(canvas: HTMLCanvasElement, region: HTMLElemen
 
   const uniform = (name: string) => gl.getUniformLocation(program, name);
   const u = {
-    resolution: uniform("uResolution"), dpr: uniform("uDpr"), region: uniform("uRegion"), canvas: uniform("uCanvas"),
+    resolution: uniform("uResolution"), dpr: uniform("uDpr"), region: uniform("uRegion"), canvas: uniform("uCanvas"), brand: uniform("uBrand"), tint: uniform("uTint"),
     imageA: uniform("uImageA"), imageB: uniform("uImageB"), sizeA: uniform("uSizeA"), sizeB: uniform("uSizeB"),
     hasA: uniform("uHasA"), hasB: uniform("uHasB"), mix: uniform("uMix"),
     count: uniform("uCount"), rects: uniform("uRects"), radii: uniform("uRadii"), rims: uniform("uRims"),
@@ -231,7 +233,11 @@ export function createLensRenderer(canvas: HTMLCanvasElement, region: HTMLElemen
     gl.viewport(0, 0, width, height);
 
     const regionBox = region.getBoundingClientRect();
-    const [r, g, b] = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim().split(/\s+/).map(Number);
+    const rootStyle = getComputedStyle(document.documentElement);
+    const rgb = (name: string) => rootStyle.getPropertyValue(name).trim().split(/\s+/).map((part) => (Number(part) || 0) / 255);
+    const [r, g, b] = rgb("--canvas");
+    const [br, bg, bb] = rgb("--brand");
+    const tint = Number(rootStyle.getPropertyValue("--glass-tint")) || 0;
     const fade = reducedMotion.matches ? 1 : Math.min(1, (now - fadeStart) / fadeDuration);
 
     const rects = new Float32Array(maxLenses * 4);
@@ -252,7 +258,9 @@ export function createLensRenderer(canvas: HTMLCanvasElement, region: HTMLElemen
     gl.uniform2f(u.resolution, width, height);
     gl.uniform1f(u.dpr, dpr);
     gl.uniform4f(u.region, regionBox.left * dpr, regionBox.top * dpr, regionBox.width * dpr, regionBox.height * dpr);
-    gl.uniform3f(u.canvas, (r || 0) / 255, (g || 0) / 255, (b || 0) / 255);
+    gl.uniform3f(u.canvas, r, g, b);
+    gl.uniform3f(u.brand, br, bg, bb);
+    gl.uniform1f(u.tint, tint);
     gl.uniform1i(u.count, count);
     gl.uniform4fv(u.rects, rects);
     gl.uniform1fv(u.radii, radii);
