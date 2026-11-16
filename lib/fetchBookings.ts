@@ -7,8 +7,11 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 interface BookingResponse {
   data: Array<{
+    uid?: string;
     status: string;
     start: string;
+    end?: string;
+    metadata?: { igdbGameId?: string };
     bookingFieldsResponses: {
       game: string;
     };
@@ -58,8 +61,11 @@ const fetchBookings = async (group: string, allBookings = false) => {
   const pages = await Promise.all([fetchStatus("upcoming"), fetchStatus("past")]);
   const bookings = pages.flat()
     .map((booking) => ({
+      id: booking.uid ?? booking.start,
+      igdbGameId: booking.metadata?.igdbGameId ? Number(booking.metadata.igdbGameId) : undefined,
       game: booking.bookingFieldsResponses.game,
       date: new Date(booking.start),
+      end: new Date(booking.end ?? new Date(new Date(booking.start).getTime() + 60 * 60_000).toISOString()),
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   return bookings;

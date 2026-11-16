@@ -5,25 +5,50 @@
 ## Wat doet het?
 
 - Toont de eerstvolgende en aankomende sessies
-- Laat je nieuwe sessies inplannen via [Cal.com](https://cal.com)
+- Eigen planner met clanwachtwoord, live beschikbaarheid en Cal.com als backend
+- Doorzoekbare gamebibliotheek en dynamische artwork via IGDB
 - Biedt een `.ics` feed aan om te koppelen aan bv. Google Calendar
 - Bevat een Discord-bot voor polls en het plannen van nieuwe sessies
 
 ## Ontwikkelen
 
 ```bash
-cp .env.dist .env          # vul de benodigde variabelen in
-npm install
-npm run dev                # start de dev-server op http://localhost:3000
+cp .env.dist .env.local     # vul de benodigde variabelen in
+pnpm install
+pnpm dev                   # http://localhost:3000
 ```
 
 ### Bot
 
 ```bash
-cd bot && npm install
-cd bot && npm run dev
+pnpm --filter wanneer-games-bot dev
 ```
 
 ## Tech-stack
 
-Next.js · Cal.com API · shadcn/ui · Tailwind CSS · Discord.js
+Next.js · React 19 · UI SDK · Tailwind CSS · Cal.com API · IGDB · Discord.js
+
+Gebruik Node 24 en pnpm 10.34.9. Met Volta: `volta install node@24`,
+`VOLTA_FEATURE_PNPM=1 volta install pnpm@10.34.9`.
+
+`KIWIS_PLANNING_PASSWORD` en `NIGLOS_PLANNING_PASSWORD` ontgrendelen ieder
+alleen hun eigen clan (minimaal vier tekens, niet hoofdlettergevoelig).
+`PLANNING_COOKIE_SECRET` (minimaal 32 willekeurige tekens, bijvoorbeeld
+`openssl rand -hex 32`) ondertekent de toegangscookies; stel hem ook in de
+productieomgeving in. De planner weigert toegang als een van deze ontbreekt.
+
+De homepage toont de komende maand. ICS-links blijven alle historische en
+toekomstige sessies ophalen, gepagineerd.
+
+## Checks
+
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+node --test lib/fetchBookings.test.mjs
+pnpm exec playwright test
+pnpm build
+```
+
+Browserchecks gebruiken lokale Cal/IGDB-credentials en het Kiwi-clanwachtwoord
+uit `.env.local`. Ze maken geen echte afspraken aan.

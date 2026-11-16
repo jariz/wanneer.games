@@ -1,55 +1,33 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as TabsPrimitive from "@radix-ui/react-tabs"
+import { useSyncExternalStore, type ReactNode } from "react";
+import { Tabs, TabsIndicator, TabsList as TabsListPrimitive, TabsPanel, TabsTab as TabsTabPrimitive } from "@ui-sdk/react/tabs";
+import { cn, type Styled } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+const subscribeNothing = () => () => {};
 
-const Tabs = TabsPrimitive.Root
+// Until hydration the indicator can't be measured, so the selected tab draws its own border;
+// after hydration the sliding indicator takes over.
+function TabsList({ className, children, ...props }: Omit<Styled<typeof TabsListPrimitive>, "children"> & { children: ReactNode }) {
+  const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
+  return (
+    <TabsListPrimitive className={cn("group/tabs relative inline-flex rounded-lg bg-raised/50 p-[3px]", className)} data-hydrated={hydrated || undefined} {...props}>
+      {children}
+      <TabsIndicator className="pointer-events-none absolute left-[var(--active-tab-left)] top-[var(--active-tab-top)] hidden h-[var(--active-tab-height)] w-[var(--active-tab-width)] rounded-md border border-control transition-[left,top,width,height] duration-200 group-data-[hydrated]/tabs:block data-[activation-direction=none]:transition-none" />
+    </TabsListPrimitive>
+  );
+}
 
-const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex h-9 items-center justify-center rounded-lg bg-muted/60 backdrop-blur-sm p-1 text-muted-foreground",
-      className
-    )}
-    {...props}
-  />
-))
-TabsList.displayName = TabsPrimitive.List.displayName
+function TabsTab({ className, ...props }: Styled<typeof TabsTabPrimitive>) {
+  return (
+    <TabsTabPrimitive
+      className={cn(
+        "flex items-center gap-2 rounded-md border border-transparent px-2.5 py-1.5 text-[11px] font-semibold text-quiet transition-colors hover:text-ink data-[selected]:border-control data-[selected]:text-ink group-data-[hydrated]/tabs:border-transparent phone:px-4 phone:text-xs",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background/70 data-[state=active]:text-foreground data-[state=active]:shadow",
-      className
-    )}
-    {...props}
-  />
-))
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
-
-const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
-    {...props}
-  />
-))
-TabsContent.displayName = TabsPrimitive.Content.displayName
-
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsPanel, TabsTab };

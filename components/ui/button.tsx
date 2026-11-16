@@ -1,57 +1,34 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
-
-import { cn } from "@/lib/utils"
+import { Button as ButtonPrimitive } from "@ui-sdk/react/button";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn, type Styled } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2.5 transition disabled:cursor-not-allowed disabled:opacity-40 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        primary: "rounded-lg border border-brand bg-brand text-canvas shadow-sm hover:-translate-y-px hover:bg-brand/90 disabled:translate-y-0 data-[disabled]:translate-y-0",
+        secondary: "rounded-lg border border-control bg-raised text-ink hover:-translate-y-px hover:bg-control/40 disabled:translate-y-0 data-[disabled]:translate-y-0",
+        ghost: "rounded-md border border-transparent text-quiet hover:border-control hover:bg-raised hover:text-ink",
+        overlay: "glass relative rounded-md text-ink hover:bg-raised/50",
+        link: "gap-2 py-2 text-[10px] text-quiet hover:text-brand hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2 rounded",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "min-h-11 px-[18px] py-3 text-xs font-semibold",
+        sm: "min-h-[34px] px-3 py-2 text-[10px] font-semibold phone:min-h-[37px] phone:px-4 phone:text-xs",
+        icon: "size-8",
+        "icon-sm": "size-6 phone:size-7",
+        none: "",
       },
     },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
+    defaultVariants: { variant: "primary", size: "default" },
+  },
+);
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+type ButtonProps = Styled<typeof ButtonPrimitive> & VariantProps<typeof buttonVariants>;
+
+function Button({ className, variant, size, ...props }: ButtonProps) {
+  return <ButtonPrimitive className={cn(buttonVariants({ variant, size }), className)} {...props} />;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-Button.displayName = "Button"
-
-export { Button, buttonVariants }
+export { Button, buttonVariants };

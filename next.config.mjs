@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Lets the dev server hydrate when opened over the local network, not only on localhost.
+  allowedDevOrigins: ["jari.computer"],
   async rewrites() {
     return [
       { source: "/inplannen", destination: "/kiwis/inplannen" },

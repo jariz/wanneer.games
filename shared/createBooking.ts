@@ -4,12 +4,14 @@ interface CreateBookingParams {
   group: string;
   start: Date;
   game?: string;
+  igdbGameId?: number;
 }
 
 const createBooking = async ({
   group,
   start,
   game,
+  igdbGameId,
 }: CreateBookingParams): Promise<void> => {
   const eventTypeId = eventTypeMap[group];
 
@@ -34,6 +36,7 @@ const createBooking = async ({
         language: "nl",
       },
       ...(game && { bookingFieldsResponses: { game } }),
+      ...(igdbGameId && { metadata: { igdbGameId: String(igdbGameId) } }),
     }),
   });
 

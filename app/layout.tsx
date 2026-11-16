@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import Background from "@/components/Background";
-import { Toaster } from "@/components/ui/toaster";
+import Providers from "@/components/providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,10 +14,16 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+const countdownFont = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-countdown",
+});
 
 export const metadata: Metadata = {
   title: "Wanneer Games?",
   description: "Wanneer is de volgende game sessie?",
+  // The site is dark already; Dark Reader rewriting it breaks hydration and the clan colours.
+  other: { "darkreader-lock": "true" },
 };
 
 export default function RootLayout({
@@ -26,17 +32,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="nl">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${countdownFont.variable} antialiased`}
       >
-        <Toaster />
-        <div>
-          <Background />
-          <main className="flex flex-col items-center justify-center min-h-screen z-10 relative p-4 text-gray-100">
-            {children}
-          </main>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
