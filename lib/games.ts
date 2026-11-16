@@ -35,6 +35,7 @@ const rotation = [
   281275, // Buckshot Roulette
   3225, // No Man's Sky
   119171, // Baldur's Gate III
+  9730, // Firewatch
 ];
 const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height;";
 
