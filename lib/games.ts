@@ -20,7 +20,6 @@ const rotation = [
   27344, // Barotrauma
   328373, // Schedule I
   55029, // Age of Empires IV
-  25076, // Red Dead Redemption 2
   1979, // Battlefield 4
   302156, // Call of Duty: Black Ops 6
   649, // Command & Conquer: Generals
@@ -53,6 +52,10 @@ const excludedArtworks = new Set([
   "ar5rh3", // The Finals: logo mark
   "ar6hoy", // Buckshot Roulette: almost entirely black
   "ar5vr3", // Forza Horizon 6: car on a white background
+  "ar74f", // Sea of Thieves: logo on black
+  "ar6bln", // ARC Raiders
+  "s81kuicumnoogbv7pmel", // No Man's Sky
+  "ar3sas", "ar69b1", "ar3tfx", // Schedule I, Call of Duty: Black Ops 6, Baldur's Gate III: too dark
 ]);
 
 // Picks a different usable artwork on each call, so a game's background varies between visits.
