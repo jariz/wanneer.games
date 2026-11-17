@@ -45,7 +45,7 @@ export default function AppShell({ access, featured, backgrounds, children }: {
           <AgentBridge />
           <a href="#inhoud" data-liquid-ignore="" className="fixed -top-20 left-5 z-[999] rounded-md bg-brand p-4 text-canvas focus:top-3">Naar inhoud</a>
           <Tabs value={group} className="flex flex-1 flex-col">
-            <header className="glass relative border-b border-glass-edge shadow-none before:hidden" data-lens="bar">
+            <header className="glass sticky top-0 z-40 border-b border-glass-edge shadow-none before:hidden" data-lens="bar">
               <Container className="grid h-[64px] grid-cols-[1fr_auto_1fr] items-center gap-3 phone:h-[76px]">
                 <Tooltip delay={300}>
                   <TooltipTrigger render={<Link href={clans[group].home} />} className="justify-self-start whitespace-nowrap text-[15px] font-bold tracking-[-.5px] phone:text-xl">
@@ -61,7 +61,7 @@ export default function AppShell({ access, featured, backgrounds, children }: {
                 </div>
               </Container>
             </header>
-            <main id="inhoud" className="min-w-0 flex-1">
+            <main id="inhoud" className="min-w-0 flex-1 scroll-mt-[64px] phone:scroll-mt-[76px]">
               <TabsPanel value={group}>{children}</TabsPanel>
             </main>
           </Tabs>

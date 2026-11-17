@@ -95,9 +95,9 @@
   }
 
   .glass[data-lens="bar"] {
-    background-color: rgb(var(--canvas) / .65);
-    -webkit-backdrop-filter: blur(6px) saturate(120%);
-    backdrop-filter: blur(6px) saturate(120%);
+    background-color: rgb(var(--canvas) / .72);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
   }
 
   /* liquidGL supplies the material once its first frame is ready. */
@@ -109,6 +109,13 @@
   :root[data-lens-active] .glass[data-glass-rendered] {
     background-color: transparent;
     box-shadow: 0 8px 24px -12px rgb(0 0 0 / .35);
+  }
+
+  /* The lens output is translucent, so the sticky bar keeps a native blur (over
+     liquidGL's inline reset) for content scrolling beneath it. */
+  :root[data-lens-active] .glass[data-lens="bar"][data-glass-rendered] {
+    -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+    backdrop-filter: blur(16px) saturate(140%) !important;
   }
 
   :root[data-lens-active] .glass[data-glass-rendered]::before {
