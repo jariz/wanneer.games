@@ -159,3 +159,56 @@ test("the app's artwork-frame handler does not request page captures", async ({ 
   });
   expect(captures).toBe(0);
 });
+
+test("hover and keyboard focus render frost in the input event, without waiting for a frame", async ({ page }) => {
+  await page.goto("/?liquidGL-engine=webgl2");
+  const control = page.getByRole("button", { name: "Koppel je agenda", exact: true });
+  await expect(control).toHaveAttribute("data-glass-rendered", "");
+  await page.mouse.move(0, 900);
+  const baseline = await page.evaluate(() => {
+    const w = window as unknown as {
+      __liquidGLRenderer__: {
+        lenses: { el: HTMLElement; options: { frost: number } }[];
+        _renderLens(lens: { el: HTMLElement; options: { frost: number } }): void;
+      };
+      hoverFrost: { event: string; frost: number; rendered: number }[];
+    };
+    const renderer = w.__liquidGLRenderer__;
+    const lens = renderer.lenses.find((lens) => lens.el.getAttribute("aria-label") === "Koppel je agenda")!;
+    let rendered = lens.options.frost;
+    const draw = renderer._renderLens.bind(renderer);
+    renderer._renderLens = (current) => {
+      draw(current);
+      if (current === lens) rendered = current.options.frost;
+    };
+    w.hoverFrost = [];
+    // These listeners run after the application's document listeners in the
+    // same dispatch. Sampling here catches an extra requestAnimationFrame hop.
+    for (const event of ["pointerover", "pointerout", "focusin", "focusout"]) {
+      document.addEventListener(event, (e) => {
+        if (e.target instanceof Node && lens.el.contains(e.target)) {
+          w.hoverFrost.push({ event, frost: lens.options.frost, rendered });
+        }
+      });
+    }
+    return lens.options.frost;
+  });
+  await control.hover();
+  await page.mouse.move(0, 900);
+  await control.focus();
+  await control.evaluate((element) => element.blur());
+  const events = await page.evaluate(() => (window as unknown as {
+    hoverFrost: { event: string; frost: number; rendered: number }[];
+  }).hoverFrost);
+  for (const record of events) expect(record.rendered).toBe(record.frost);
+  for (const event of ["pointerover", "focusin"]) {
+    const entered = events.filter((record) => record.event === event);
+    expect(entered.length).toBeGreaterThan(0);
+    for (const record of entered) expect(record.frost).toBeGreaterThan(baseline);
+  }
+  for (const event of ["pointerout", "focusout"]) {
+    const exited = events.filter((record) => record.event === event);
+    expect(exited.length).toBeGreaterThan(0);
+    for (const record of exited) expect(record.frost).toBe(baseline);
+  }
+});

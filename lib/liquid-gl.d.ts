@@ -30,6 +30,8 @@ declare module "liquid-gl" {
     registerDynamic(elements: Element | Element[]): void;
     /** Local liquid-gl patch: cached page layers around a live background canvas. */
     registerBackdrop(canvas: HTMLCanvasElement): { update(): void; destroy(): void };
+    /** Submit changed optics without recapturing the scene (local patch). */
+    render(): void;
   };
   export default liquidGL;
 }

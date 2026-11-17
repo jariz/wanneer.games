@@ -23,6 +23,11 @@ The app invalidates static layers on observed DOM changes and image loads.
 Artwork frame events only increment the backdrop version. Disposing the glass
 releases the registration and renderer-owned layer canvases.
 
+The patch also exposes `liquidGL.render()` to submit changed lens options
+immediately. Hover/focus call it only when frost actually changes, avoiding both
+the app's DOM-sync frame and the library's ticker delay. It uses the existing
+render-signature checks and never captures the page.
+
 `tests/browser/liquid-gl.spec.ts` checks changing WebGL canvas pixels, foreground
 alpha, background outside the canvas, zero captures during animation, idle
 upload suppression, explicit recapture, resize and cleanup on both backends

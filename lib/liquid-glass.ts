@@ -127,13 +127,21 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     if (!frame) frame = requestAnimationFrame(sync);
   };
   const updateInteraction = () => {
+    let changed = false;
     for (const [element, lens] of lenses) {
       if (!element.matches(interactive)) continue;
       const active = element.matches(":hover, :focus-within") &&
         !element.matches("[data-selected], [data-checked], [data-disabled], [data-unavailable], :disabled");
       // This is the same runtime option update used by liquidGL's own helper.
-      lens.options.frost = materials[materialFor(element)].frost + (active ? 2.5 : 0);
+      const frost = materials[materialFor(element)].frost + (active ? 2.5 : 0);
+      if (lens.options.frost === frost) continue;
+      lens.options.frost = frost;
+      changed = true;
     }
+    return changed;
+  };
+  const interact = () => {
+    if (updateInteraction()) liquidGL.render();
   };
   const observer = new MutationObserver(() => {
     schedule();
@@ -148,7 +156,9 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   document.addEventListener("load", refresh, true);
   addEventListener("resize", schedule);
   const interactionEvents = ["pointerover", "pointerout", "focusin", "focusout"] as const;
-  for (const event of interactionEvents) document.addEventListener(event, schedule);
+  // Submit changed optics during input, alongside native CSS hover/focus.
+  // A full DOM sync and liquidGL's ticker would otherwise add frame delays.
+  for (const event of interactionEvents) document.addEventListener(event, interact);
   artwork.addEventListener("artwork-frame", backdrop.update);
   sync();
   return () => {
@@ -159,7 +169,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     document.removeEventListener("toggle", schedule, true);
     document.removeEventListener("load", refresh, true);
     removeEventListener("resize", schedule);
-    for (const event of interactionEvents) document.removeEventListener(event, schedule);
+    for (const event of interactionEvents) document.removeEventListener(event, interact);
     cancelAnimationFrame(frame);
     for (const [element, lens] of lenses) {
       lens.destroy();

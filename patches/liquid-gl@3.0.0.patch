@@ -1,5 +1,5 @@
 diff --git a/liquidGL.js b/liquidGL.js
-index acd46bb8d991227adf16dbd4faafcd1ae6e286e2..ea5f78ac5708dd1f4890d34e79fc0bfce5fcce20 100644
+index acd46bb8d991227adf16dbd4faafcd1ae6e286e2..056540e3fa9813be40ff3ec4cd2740cc5e7ad6dc 100644
 --- a/liquidGL.js
 +++ b/liquidGL.js
 @@ -109,6 +109,9 @@ const liquidGL = (() => {
@@ -132,10 +132,14 @@ index acd46bb8d991227adf16dbd4faafcd1ae6e286e2..ea5f78ac5708dd1f4890d34e79fc0bfc
      _videoIsOpaque(vid) {
        if (!vid.videoWidth || !vid.videoHeight) return false;
  
-@@ -8862,6 +8936,27 @@ fn fs() -> @location(0) vec4<f32> {
+@@ -8862,6 +8936,31 @@ fn fs() -> @location(0) vec4<f32> {
    /* --------------------------------------------------
     *  Public helper: register elements that need live updates
     * ------------------------------------------------*/
++  // Submit changed lens options alongside native input feedback, without a
++  // capture or another animation-frame hop. Unchanged renderers skip drawing.
++  window.liquidGL.render = renderAll;
++
 +  window.liquidGL.registerBackdrop = function (canvas) {
 +    backdropSource = canvas;
 +    const refresh = () => {
