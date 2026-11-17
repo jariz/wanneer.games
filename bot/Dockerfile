@@ -6,6 +6,7 @@ RUN corepack enable && corepack prepare pnpm@10.34.9 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY bot/package.json ./bot/
 COPY scripts/ ./scripts/
+COPY patches/ ./patches/
 RUN pnpm install --prod --frozen-lockfile
 
 FROM node:24-alpine
