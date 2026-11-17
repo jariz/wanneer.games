@@ -2,7 +2,6 @@ import liquidGL, { type LiquidLens } from "liquid-gl";
 
 const selector = ".glass, .glass-control";
 const interactive = "button, a, [role='radio'], [role='tab'], .glass-control:has(input)";
-const alienNavOptics = { refraction: .073, bevelDepth: .2, bevelWidth: .156 };
 const materials = {
   panel: { frost: 2.6, magnify: 1.025, opacity: .4 },
   bar: { frost: 2, magnify: 1, opacity: .55 },
@@ -14,10 +13,13 @@ function materialFor(element: HTMLElement) {
   return element.matches('[role="tooltip"]') ? "tooltip" : element.dataset.lens === "bar" ? "bar" : element.classList.contains("glass-control") ? "control" : "panel";
 }
 
-function optics() {
-  // liquidGL offsets snapshot UVs, not element-local pixels.
+function optics(material: keyof typeof materials) {
+  // liquidGL offsets snapshot UVs, not element-local pixels, so fixed UV values
+  // grow with page length. The nav gets a stronger, but still bounded, bevel.
   const size = Math.max(innerWidth, innerHeight, document.body.scrollWidth, document.body.scrollHeight);
-  return { refraction: 6 / size, bevelDepth: 18 / size };
+  return material === "bar"
+    ? { refraction: 20 / size, bevelDepth: 45 / size, bevelWidth: .156 }
+    : { refraction: 6 / size, bevelDepth: 18 / size };
 }
 
 export function createLiquidGlass(artwork: HTMLCanvasElement) {
@@ -62,9 +64,8 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     excludeHiddenText();
     tintColor = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim().split(/\s+/).join(", ");
     const elements = new Set(document.querySelectorAll<HTMLElement>(selector));
-    const displacement = optics();
     for (const [element, lens] of lenses) {
-      Object.assign(lens.options, materialFor(element) === "bar" ? alienNavOptics : displacement);
+      Object.assign(lens.options, optics(materialFor(element)));
       updateTint(lens);
       if (elements.has(element) && element.checkVisibility() && !element.matches("[data-disabled], [data-unavailable], :disabled")) continue;
       // React may have replaced a placeholder with game artwork since mounting.
@@ -91,7 +92,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
         zIndex: -1,
         resolution: Math.min(devicePixelRatio, 1.5),
         bevelWidth: .14,
-        ...(name === "bar" ? alienNavOptics : displacement),
+        ...optics(name as keyof typeof materials),
         aberration: 0,
         interaction: "none",
         ...material,
