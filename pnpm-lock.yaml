@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  liquid-gl@3.0.0:
+    hash: 52dc5257c83292f24bd991940c361827ab9806bed803a5635b3614e8f170c639
+    path: patches/liquid-gl@3.0.0.patch
+
 importers:
 
   .:
@@ -37,7 +42,7 @@ importers:
         version: 3.8.1
       liquid-gl:
         specifier: 3.0.0
-        version: 3.0.0
+        version: 3.0.0(patch_hash=52dc5257c83292f24bd991940c361827ab9806bed803a5635b3614e8f170c639)
       lucide-react:
         specifier: ^0.576.0
         version: 0.576.0(react@19.2.4)
@@ -5813,7 +5818,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  liquid-gl@3.0.0: {}
+  liquid-gl@3.0.0(patch_hash=52dc5257c83292f24bd991940c361827ab9806bed803a5635b3614e8f170c639): {}
 
   locate-path@6.0.0:
     dependencies:

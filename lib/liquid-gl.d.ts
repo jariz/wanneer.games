@@ -28,6 +28,8 @@ declare module "liquid-gl" {
   const liquidGL: {
     (options: Options): LiquidLens | LiquidLens[] | undefined;
     registerDynamic(elements: Element | Element[]): void;
+    /** Local liquid-gl patch: cached page layers around a live background canvas. */
+    registerBackdrop(canvas: HTMLCanvasElement): { update(): void; destroy(): void };
   };
   export default liquidGL;
 }

@@ -1,0 +1,162 @@
+diff --git a/liquidGL.js b/liquidGL.js
+index acd46bb8d991227adf16dbd4faafcd1ae6e286e2..ea5f78ac5708dd1f4890d34e79fc0bfce5fcce20 100644
+--- a/liquidGL.js
++++ b/liquidGL.js
+@@ -109,6 +109,9 @@ const liquidGL = (() => {
+     backend.ctx?.unconfigure();
+     backend.gl?.getExtension("WEBGL_lose_context")?.loseContext();
+   };
++  // One live background canvas, shared by all snapshot renderers.
++  let backdropSource = null;
++  let backdropVersion = 0;
+   const videoFrames = new Map();
+   const videoFrame = (video) => {
+     if (!video.requestVideoFrameCallback) return video.currentTime;
+@@ -2250,6 +2253,35 @@ const liquidGL = (() => {
+         await Promise.all(plan.assets);
+         plan = measure(element, opts) || plan;
+       }
++      const split = opts.backdrop
++        ? plan.ops.findIndex((op) => op.t === OP_BOX && op.node.el === opts.backdrop)
++        : -1;
++      if (split >= 0) {
++        // Retain alpha operations in every layer so nested stacking contexts
++        // keep their opacity. Geometry, styles and clipping are measured once.
++        const layer = (include, backgroundColor = null) => ({
++          ...plan,
++          backgroundColor,
++          ops: plan.ops.filter((op, i) => op.t >= OP_ALPHA_PUSH || include(i)),
++        });
++        const below = await paintChunked(
++          layer((i) => i < split, plan.backgroundColor),
++          document.createElement("canvas"), opts.budgetMs || 8,
++        );
++        const above = await paintChunked(
++          layer((i) => i > split),
++          document.createElement("canvas"), opts.budgetMs || 8,
++        );
++        const live = layer((i) => i === split);
++        paint(live, canvas);
++        const ctx = canvas.getContext("2d");
++        ctx.globalCompositeOperation = "destination-over";
++        ctx.drawImage(below, 0, 0);
++        ctx.globalCompositeOperation = "source-over";
++        ctx.drawImage(above, 0, 0);
++        canvas._backdrop = { source: opts.backdrop, below, above, live };
++        return canvas;
++      }
+       return paintChunked(plan, canvas, opts.budgetMs || 8);
+     }
+ 
+@@ -5800,6 +5832,7 @@ fn fs() -> @location(0) vec4<f32> {
+               scale: scale,
+               backgroundColor,
+               ignoreElements: naughtyIgnore,
++              backdrop: backdropSource,
+             },
+           );
+ 
+@@ -5872,6 +5905,7 @@ fn fs() -> @location(0) vec4<f32> {
+         return false;
+       }
+       this.staticSnapshotCanvas = srcCanvas;
++      this._backdrop = srcCanvas._backdrop;
+       if (!this.backend || !this.backend.uploadSnapshot(srcCanvas)) {
+         return false;
+       }
+@@ -5956,6 +5990,7 @@ fn fs() -> @location(0) vec4<f32> {
+       this.canvas.remove();
+       this.canvas.width = this.canvas.height = 0;
+       this._output = this._outputCanvas = this.staticSnapshotCanvas = null;
++      this._backdrop = this._backdropCanvas = null;
+       this._videoNodes.length = 0;
+       this._videoComposites = null;
+       if (window.__liquidGLRenderer__ === this)
+@@ -6266,6 +6301,7 @@ fn fs() -> @location(0) vec4<f32> {
+         }
+       }
+       const pointer = this._fluidPointer;
++      if (this._backdrop?.source === backdropSource) state.push(backdropVersion);
+       state.push(pointer?.active, pointer?.x, pointer?.y, pointer?.time);
+       animated ||= !!(
+         pointer?.active &&
+@@ -6370,6 +6406,7 @@ fn fs() -> @location(0) vec4<f32> {
+         this._contentLayers.length > 0 || lower.length > 0,
+       );
+ 
++      this._updateBackdrop();
+       if (this._updateDynamicVideos() !== false) this._updateDynamicNodes();
+ 
+       this._frameSnapRect = this.snapshotTarget.getBoundingClientRect();
+@@ -6813,6 +6850,43 @@ fn fs() -> @location(0) vec4<f32> {
+       ctx.closePath();
+     }
+ 
++    _updateBackdrop() {
++      const layers = this._backdrop;
++      if (!layers || layers.source !== backdropSource || !backdropSource.isConnected)
++        return;
++      const snap = this.snapshotTarget.getBoundingClientRect();
++      const scale = this.scaleFactor;
++      // Use the same expanded sampling bounds as videos (bevel, frost and
++      // magnification included), restricted to lenses actually on screen.
++      let left = this.textureWidth, top = this.textureHeight, right = 0, bottom = 0;
++      for (const area of this._videoSampleAreas || []) {
++        if (area.left >= innerWidth || area.top >= innerHeight ||
++            area.left + area.width <= 0 || area.top + area.height <= 0) continue;
++        left = Math.min(left, Math.max(0, Math.floor((area.left - snap.left) * scale) - 2));
++        top = Math.min(top, Math.max(0, Math.floor((area.top - snap.top) * scale) - 2));
++        right = Math.max(right, Math.min(this.textureWidth, Math.ceil((area.left + area.width - snap.left) * scale) + 2));
++        bottom = Math.max(bottom, Math.min(this.textureHeight, Math.ceil((area.top + area.height - snap.top) * scale) + 2));
++      }
++      const width = right - left, height = bottom - top;
++      if (width <= 0 || height <= 0) return;
++      const key = [backdropVersion, left, top, width, height].join(",");
++      if (layers.key === key) return;
++      const canvas = this._backdropCanvas ||= document.createElement("canvas");
++      const base = layers.live.base.slice();
++      base[4] -= left;
++      base[5] -= top;
++      NaughtyDOM.paint({
++        ...layers.live, base, width: width / scale, height: height / scale,
++      }, canvas);
++      const ctx = canvas.getContext("2d");
++      ctx.globalCompositeOperation = "destination-over";
++      ctx.drawImage(layers.below, left, top, width, height, 0, 0, width, height);
++      ctx.globalCompositeOperation = "source-over";
++      ctx.drawImage(layers.above, left, top, width, height, 0, 0, width, height);
++      this.backend.uploadRegion(left, top, canvas);
++      layers.key = key;
++    }
++
+     _videoIsOpaque(vid) {
+       if (!vid.videoWidth || !vid.videoHeight) return false;
+ 
+@@ -8862,6 +8936,27 @@ fn fs() -> @location(0) vec4<f32> {
+   /* --------------------------------------------------
+    *  Public helper: register elements that need live updates
+    * ------------------------------------------------*/
++  window.liquidGL.registerBackdrop = function (canvas) {
++    backdropSource = canvas;
++    const refresh = () => {
++      for (const renderer of renderers) {
++        renderer._captureGeneration = (renderer._captureGeneration || 0) + 1;
++        renderer.captureSnapshot();
++      }
++    };
++    refresh();
++    return {
++      update() {
++        if (backdropSource === canvas) backdropVersion++;
++      },
++      destroy() {
++        if (backdropSource !== canvas) return;
++        backdropSource = null;
++        refresh();
++      },
++    };
++  };
++
+   window.liquidGL.registerDynamic = function (elements) {
+     for (const renderer of renderers.values()) {
+       renderer.addDynamicElement(elements);

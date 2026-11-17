@@ -23,6 +23,7 @@ function optics(material: keyof typeof materials) {
 }
 
 export function createLiquidGlass(artwork: HTMLCanvasElement) {
+  const backdrop = liquidGL.registerBackdrop(artwork);
   const lenses = new Map<HTMLElement, LiquidLens>();
   const captureExcluded = new Set<Element>();
   const excludeHiddenText = () => {
@@ -53,7 +54,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     if (refreshTimer) return;
     refreshTimer = setTimeout(() => {
       refreshTimer = undefined;
-      // v3's dynamic rasterizer ignores canvases; refresh its scene explicitly.
+      // Refresh static page layers only when the scene changes.
       liquidGL.registerDynamic([]);
     }, 100);
   };
@@ -134,23 +135,29 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
       lens.options.frost = materials[materialFor(element)].frost + (active ? 2.5 : 0);
     }
   };
-  const observer = new MutationObserver(schedule);
+  const observer = new MutationObserver(() => {
+    schedule();
+    refresh();
+  });
   observer.observe(document.body, {
-    subtree: true, childList: true, attributes: true,
+    subtree: true, childList: true, characterData: true, attributes: true,
     attributeFilter: ["class", "hidden", "open", "data-open", "data-disabled", "data-unavailable", "data-selected", "data-checked", "data-glass-tone", "data-clan"],
   });
   document.addEventListener("toggle", schedule, true);
+  // Images can finish loading without a DOM mutation.
+  document.addEventListener("load", refresh, true);
   addEventListener("resize", schedule);
   const interactionEvents = ["pointerover", "pointerout", "focusin", "focusout"] as const;
   for (const event of interactionEvents) document.addEventListener(event, schedule);
-  artwork.addEventListener("artwork-frame", refresh);
+  artwork.addEventListener("artwork-frame", backdrop.update);
   sync();
   return () => {
     destroyed = true;
     observer.disconnect();
     clearTimeout(refreshTimer);
-    artwork.removeEventListener("artwork-frame", refresh);
+    artwork.removeEventListener("artwork-frame", backdrop.update);
     document.removeEventListener("toggle", schedule, true);
+    document.removeEventListener("load", refresh, true);
     removeEventListener("resize", schedule);
     for (const event of interactionEvents) document.removeEventListener(event, schedule);
     cancelAnimationFrame(frame);
@@ -159,6 +166,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
       delete element.dataset.glassRendered;
     }
     lenses.clear();
+    backdrop.destroy();
     for (const element of captureExcluded) element.removeAttribute("data-liquid-ignore");
     captureExcluded.clear();
   };
