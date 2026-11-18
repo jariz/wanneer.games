@@ -16,8 +16,6 @@ type BackdropState = {
   previous: Game | undefined;
   step: (offset: number) => void;
   pin: (game: Game | null) => void;
-  live: boolean;
-  setLive: (live: boolean) => void;
 };
 const BackdropContext = createContext<BackdropState | null>(null);
 
@@ -39,7 +37,6 @@ export function usePinnedBackdrop(game: Game | null) {
 // A pinned game leads and stays put; otherwise the backgrounds rotate.
 export function BackdropProvider({ backgrounds, featured, children }: { backgrounds: Game[]; featured: Game | null; children: ReactNode }) {
   const [pinned, pin] = useState<Game | null>(null);
-  const [live, setLive] = useState(false);
   const lead = pinned ?? featured;
   const artwork = useMemo(() => {
     const games = lead ? [lead, ...backgrounds.filter((game) => game.id !== lead.id)] : backgrounds;
@@ -71,14 +68,14 @@ export function BackdropProvider({ backgrounds, featured, children }: { backgrou
   }, [autoplay, position, step]);
 
   return (
-    <BackdropContext value={{ artwork, active: artwork[index], previous: currentPosition.previous === undefined ? undefined : artwork[currentPosition.previous], step, pin, live, setLive }}>
+    <BackdropContext value={{ artwork, active: artwork[index], previous: currentPosition.previous === undefined ? undefined : artwork[currentPosition.previous], step, pin }}>
       {children}
     </BackdropContext>
   );
 }
 
 export function Backdrop() {
-  const { active, previous, live } = useBackdrop();
+  const { active, previous } = useBackdrop();
   const nearby = [...new Set([previous, active])].filter((game): game is Game => Boolean(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
@@ -112,11 +109,11 @@ export function Backdrop() {
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-x-0 top-0 -z-10 hidden w-full [:root[data-lens-active]_&]:block" aria-hidden="true" />
       <div
         ref={regionRef}
-        className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
+        className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden portrait:overflow-visible phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
         aria-hidden="true"
         data-testid="backdrop"
       >
-        <div className="absolute inset-0 brightness-[.82] [:root[data-lens-active]_&]:hidden">
+        <div className="absolute inset-0 overflow-hidden brightness-[.82] [:root[data-lens-active]_&]:hidden">
           {nearby.map((game) => (
             <div
               key={`${game.id}:${game.artwork}`}
@@ -127,7 +124,7 @@ export function Backdrop() {
             />
           ))}
         </div>
-        {live && active?.artwork && <LiveSpecular onCanvas={setEffect} />}
+        <LiveSpecular onCanvas={setEffect} />
         <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-transparent [:root[data-lens-active]_&]:hidden" />
       </div>
     </>

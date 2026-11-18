@@ -107,7 +107,9 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     const dpr = Math.min(devicePixelRatio, 2);
     const box = region.getBoundingClientRect();
     const origin = canvas.getBoundingClientRect();
-    const cssHeight = Math.ceil(box.bottom - origin.top);
+    const artworkHeight = Math.ceil(box.bottom - origin.top);
+    const effectBox = effect?.getBoundingClientRect();
+    const cssHeight = Math.ceil(Math.max(box.bottom, effectBox?.bottom ?? box.bottom) - origin.top);
     const width = Math.round(origin.width * dpr), height = Math.round(cssHeight * dpr);
     if (canvas.style.height !== `${cssHeight}px`) canvas.style.height = `${cssHeight}px`;
     if (canvas.width !== width || canvas.height !== height) {
@@ -119,7 +121,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     const progress = reducedMotion.matches ? 1 : Math.min(1, (now - started) / 1000);
     gl.uniform2f(u.resolution, width, height);
     // Include the nav in the artwork crop instead of stretching one image row behind it.
-    gl.uniform4f(u.region, (box.left - origin.left) * dpr, 0, box.width * dpr, cssHeight * dpr);
+    gl.uniform4f(u.region, (box.left - origin.left) * dpr, 0, box.width * dpr, artworkHeight * dpr);
     gl.uniform3f(u.base, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
     for (const [index, image] of [progress < 1 ? previous : null, current].entries()) {
       gl.activeTexture(index ? gl.TEXTURE1 : gl.TEXTURE0);
@@ -132,8 +134,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     gl.bindTexture(gl.TEXTURE_2D, effectTexture);
     const hasEffect = effect && effect.width > 0 && effect.height > 0;
     gl.uniform1f(u.effectOpacity, hasEffect ? Math.min(1, (now - effectStarted) / 2000) : 0);
-    if (effect && hasEffect) {
-      const effectBox = effect.getBoundingClientRect();
+    if (effect && hasEffect && effectBox) {
       gl.uniform4f(u.effectRegion, (effectBox.left - origin.left) * dpr, (effectBox.top - origin.top) * dpr, effectBox.width * dpr, effectBox.height * dpr);
       // Composite the live WebGPU canvas before liquidGL samples this backdrop.
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, effect);

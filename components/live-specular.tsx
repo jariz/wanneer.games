@@ -10,8 +10,16 @@ function subscribe(onChange: () => void) {
   return () => media.removeEventListener("change", onChange);
 }
 
+const mobileQuery = "(max-width: 600px)";
+function subscribeMobile(onChange: () => void) {
+  const media = matchMedia(mobileQuery);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
 export default function LiveSpecular({ onCanvas }: { onCanvas: (canvas: HTMLCanvasElement | null) => void }) {
   const reduced = useSyncExternalStore(subscribe, () => matchMedia(preference).matches, () => true);
+  const mobile = useSyncExternalStore(subscribeMobile, () => matchMedia(mobileQuery).matches, () => false);
   const [ready, setReady] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -21,7 +29,7 @@ export default function LiveSpecular({ onCanvas }: { onCanvas: (canvas: HTMLCanv
   if (reduced) return null;
 
   return (
-    <div ref={container} className="pointer-events-none absolute inset-0 overflow-hidden [:root[data-lens-active]_&]:opacity-0" data-testid="live-specular" aria-hidden="true" data-liquid-ignore="">
+    <div ref={container} className="pointer-events-none absolute inset-0 overflow-hidden portrait:-bottom-[min(35svh,240px)] portrait:min-h-[max(90svh,640px)] [:root[data-lens-active]_&]:opacity-0" data-testid="live-specular" aria-hidden="true" data-liquid-ignore="">
       <Shader
         disableTelemetry
         toneMapping="aces"
@@ -36,8 +44,11 @@ export default function LiveSpecular({ onCanvas }: { onCanvas: (canvas: HTMLCanv
             center={{ x: 0.5, y: 0.5 }}
             colorSpace="oklab"
             intensity={0.64}
-            shape={{ type: "hemisphere3D", radius: 0.89, cut: 0, rotX: 30, rotY: 0, rotZ: 0 }}
-            shapeType="hemisphere3D"
+            scale={mobile ? 1.1984 : 1}
+            shape={mobile
+              ? { type: "circleSDF", radius: 0.35 }
+              : { type: "hemisphere3D", radius: 0.89, cut: 0, rotX: 30, rotY: 0, rotZ: 0 }}
+            shapeType={mobile ? "circleSDF" : "hemisphere3D"}
             smoke={0.64}
             smokeSize={0}
             softness={0.89}

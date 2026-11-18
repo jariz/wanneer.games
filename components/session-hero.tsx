@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus } from "lucide-react";
-import { useEffect } from "react";
 import { dateLabel, formatDate, sessionTiming, type Session } from "@/lib/session-display";
 import { useBackdrop } from "./backdrop";
 import PageContainer from "./page-container";
@@ -58,12 +57,7 @@ function ArtworkSwitcher() {
 }
 
 export default function SessionHero({ next, now }: { next: Session | undefined; now: number }) {
-  const live = true;
-  const { setLive } = useBackdrop();
-  useEffect(() => {
-    setLive(live);
-    return () => setLive(false);
-  }, [live, setLive]);
+  const { live } = sessionTiming(next, now);
   return (
     <section className="relative min-h-[56.25vw] phone:min-h-[max(460px,calc(100svh_-_226px))]" aria-label="Volgende sessie" data-testid="session-hero">
       <PageContainer className="relative flex min-h-[inherit] flex-col pt-[calc(56.25vw_-_32px)] phone:pt-8">
