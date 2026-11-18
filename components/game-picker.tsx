@@ -26,27 +26,34 @@ function Cover({ game, className }: { game: Game | null; className: string }) {
 }
 
 // A game from the list (with artwork and an IGDB link) or any name typed in.
-export default function GamePicker({ group, games, value, onValueChange }: {
-  group: Clan; games: Game[]; value: GameChoice; onValueChange: (value: GameChoice) => void;
-}) {
+type GamePickerProps = {
+  games: Game[]; value: GameChoice; onValueChange: (value: GameChoice) => void;
+  allowCustomValue?: boolean;
+  label?: string;
+  placeholder?: string;
+} & ({ group: Clan; searchGames?: never; searchKey?: never } | {
+  group?: never; searchGames: (query: string) => Promise<Game[]>; searchKey: string;
+});
+
+export default function GamePicker({ group, games, value, onValueChange, searchGames, searchKey, allowCustomValue = true, label = "Game", placeholder = "Kies of typ een game…" }: GamePickerProps) {
   const [field, setField] = useState<HTMLDivElement | null>(null);
   const [term, setTerm] = useState("");
   const debouncedTerm = useDebouncedValue(term.slice(0, 80), 350);
   const searching = term.length >= minQueryLength;
   const search = useQuery({
-    queryKey: ["games", group, debouncedTerm],
-    queryFn: () => findPlanningGames(group, debouncedTerm),
+    queryKey: ["games", searchKey ?? group, debouncedTerm],
+    queryFn: () => searchGames ? searchGames(debouncedTerm) : findPlanningGames(group, debouncedTerm),
     enabled: debouncedTerm.length >= minQueryLength,
     staleTime: 5 * 60_000,
   });
   const loading = searching && (debouncedTerm !== term || search.isPending);
-  const items = searching ? search.data ?? [] : games.filter((game) => game.name.toLowerCase().includes(term.toLowerCase()));
+  const items = searching ? (debouncedTerm === term ? search.data ?? [] : []) : games.filter((game) => game.name.toLowerCase().includes(term.toLowerCase()));
 
   return (
     <Combobox
       value={value}
       onValueChange={(next) => onValueChange(next === "" ? null : next)}
-      allowCustomValue
+      allowCustomValue={allowCustomValue}
       // Only typing searches; choosing, clearing or Escape put the text back to a game name or nothing.
       onQueryChange={(query, details) => setTerm(details.reason === "input-change" ? query.trim() : "")}
       itemToValue={(choice) => (isGame(choice) ? String(choice.id) : choice ?? "")}
@@ -55,22 +62,22 @@ export default function GamePicker({ group, games, value, onValueChange }: {
       filter={false}
       status={loading ? "loading" : "idle"}
     >
-      <ComboboxLabel className="mb-2 block text-[11px] font-medium text-ink">Game</ComboboxLabel>
+      <ComboboxLabel className="mb-2 block text-[11px] font-medium text-ink">{label}</ComboboxLabel>
       <div ref={setField} className="glass-control flex items-center gap-2.5 rounded-lg border border-glass-edge pl-2 pr-1 transition-colors focus-within:border-brand">
         <Cover game={choiceGame(value)} className="h-9 w-7" />
-        <ComboboxInput className="min-h-11 min-w-0 flex-1 bg-transparent text-xs text-ink placeholder:text-quiet focus-visible:outline-none" placeholder="Kies of typ een game…" maxLength={120} />
+        <ComboboxInput className="min-h-11 min-w-0 flex-1 bg-transparent text-xs text-ink placeholder:text-quiet focus-visible:outline-none" placeholder={placeholder} maxLength={120} />
         <span className="flex items-center">
           <ComboboxClear className="grid size-7 place-items-center rounded-md text-quiet hover:bg-white/10 hover:text-ink" aria-label="Wis game"><X size={15} /></ComboboxClear>
-          <ComboboxTrigger className="grid size-7 place-items-center rounded-md text-quiet hover:bg-white/10 hover:text-ink data-[open]:rotate-180" aria-label="Toon games"><ChevronDown size={16} /></ComboboxTrigger>
+          {games.length > 0 && <ComboboxTrigger className="grid size-7 place-items-center rounded-md text-quiet hover:bg-white/10 hover:text-ink data-[open]:rotate-180" aria-label="Toon games"><ChevronDown size={16} /></ComboboxTrigger>}
         </span>
       </div>
       <ComboboxContent
         anchor={field}
         sideOffset={6}
-        className="glass z-50 flex w-[var(--anchor-width)] flex-col [&:not(:has([data-slot=combobox-item],[data-slot=combobox-status]:not(:empty)))]:hidden overflow-clip rounded-xl border border-white/10 bg-surface/70 p-1 shadow-xl before:hidden [max-height:min(360px,var(--available-height))]"
+        className="glass z-50 flex w-[var(--anchor-width)] flex-col overflow-clip rounded-xl border border-white/10 bg-surface/70 p-1 shadow-xl before:hidden [max-height:min(360px,var(--available-height))]"
       >
         <ComboboxStatus className="shrink-0 px-3 py-2.5 text-[11px] text-quiet empty:hidden">
-          {(state) => (state.loading ? "Games zoeken…" : null)}
+          {(state) => state.loading ? "Games zoeken…" : searching && search.isError ? "Games laden lukt niet. Probeer opnieuw." : !items.length ? searching ? "Geen games gevonden." : "Typ minstens 2 tekens om games te zoeken." : null}
         </ComboboxStatus>
         <ComboboxList className="min-h-0 overflow-y-auto overscroll-contain [scrollbar-color:rgb(var(--control))_transparent] [scrollbar-width:thin]">
           {items.map((game) => (

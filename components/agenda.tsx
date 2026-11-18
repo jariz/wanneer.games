@@ -2,7 +2,6 @@ import { CalendarDays, Plus } from "lucide-react";
 import type { Session } from "@/lib/session-display";
 import { PlanningButton } from "./planning-access";
 import SessionRow from "./session-row";
-import { Counter } from "./ui/typography";
 
 function EmptyAgenda() {
   return (
@@ -20,7 +19,7 @@ export default function Agenda({ sessions }: { sessions: Session[] }) {
   return (
     <section aria-labelledby="agenda-heading">
       <h2 className="mb-4 text-base font-semibold tracking-tight phone:text-[17px]" id="agenda-heading">
-        De agenda <Counter compact className="ml-2 align-middle">{sessions.length.toString().padStart(2, "0")}</Counter>
+        Agenda
       </h2>
       <div className="border-t border-glass-edge">
         {sessions.map((session) => <SessionRow key={session.id} session={session} />)}

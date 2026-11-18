@@ -50,8 +50,8 @@ function ArtworkSwitcher() {
         <span className="hidden font-mono text-[6px] tracking-wider phone:block">ACHTERGROND</span>
         {active.name}
       </span>
-      <Button variant="overlay" size="icon-sm" aria-label="Vorige game-achtergrond" data-lens="" onClick={() => step(-1)}><ChevronLeft size={17} /></Button>
-      <Button variant="overlay" size="icon-sm" aria-label="Volgende game-achtergrond" data-lens="" onClick={() => step(1)}><ChevronRight size={17} /></Button>
+      <Button variant="overlay" size="icon-sm" aria-label="Vorige achtergrond" data-lens="" onClick={() => step(-1)}><ChevronLeft size={17} /></Button>
+      <Button variant="overlay" size="icon-sm" aria-label="Volgende achtergrond" data-lens="" onClick={() => step(1)}><ChevronRight size={17} /></Button>
     </div>
   );
 }

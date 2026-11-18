@@ -1,0 +1,350 @@
+{
+  "version": 1,
+  "games": [
+    {
+      "id": 28489,
+      "name": "Ready or Not",
+      "artworkIds": []
+    },
+    {
+      "id": 2950,
+      "name": "Age of Empires II: HD Edition",
+      "artworkIds": []
+    },
+    {
+      "id": 299,
+      "name": "Age of Empires III",
+      "artworkIds": []
+    },
+    {
+      "id": 104967,
+      "name": "Valheim",
+      "artworkIds": [
+        "ar6mrs"
+      ]
+    },
+    {
+      "id": 15894,
+      "name": "Hearts of Iron IV",
+      "artworkIds": []
+    },
+    {
+      "id": 250616,
+      "name": "Helldivers 2",
+      "artworkIds": []
+    },
+    {
+      "id": 3189,
+      "name": "Project Zomboid",
+      "artworkIds": []
+    },
+    {
+      "id": 11582,
+      "name": "Stellaris",
+      "artworkIds": [
+        "scoh5u",
+        "ar6jr"
+      ]
+    },
+    {
+      "id": 17832,
+      "name": "Don't Starve Together",
+      "artworkIds": []
+    },
+    {
+      "id": 3239,
+      "name": "Space Engineers",
+      "artworkIds": [
+        "ar72z"
+      ]
+    },
+    {
+      "id": 185258,
+      "name": "ARC Raiders",
+      "artworkIds": [
+        "sc11kki",
+        "sc11kk7"
+      ]
+    },
+    {
+      "id": 317407,
+      "name": "Battlefield 6",
+      "artworkIds": [
+        "scy45l",
+        "scy45k"
+      ]
+    },
+    {
+      "id": 11137,
+      "name": "Sea of Thieves",
+      "artworkIds": []
+    },
+    {
+      "id": 27344,
+      "name": "Barotrauma",
+      "artworkIds": [
+        "ar5cb"
+      ]
+    },
+    {
+      "id": 328373,
+      "name": "Schedule I",
+      "artworkIds": []
+    },
+    {
+      "id": 55029,
+      "name": "Age of Empires IV",
+      "artworkIds": []
+    },
+    {
+      "id": 1979,
+      "name": "Battlefield 4",
+      "artworkIds": [
+        "gkvbblwscco4eaiquxfw"
+      ]
+    },
+    {
+      "id": 302156,
+      "name": "Call of Duty: Black Ops 6",
+      "artworkIds": []
+    },
+    {
+      "id": 649,
+      "name": "Command & Conquer: Generals",
+      "artworkIds": []
+    },
+    {
+      "id": 16664,
+      "name": "Wargame: Red Dragon",
+      "artworkIds": []
+    },
+    {
+      "id": 242408,
+      "name": "Counter-Strike 2",
+      "artworkIds": [
+        "scoqia",
+        "scoqih"
+      ]
+    },
+    {
+      "id": 348330,
+      "name": "Forza Horizon 6",
+      "artworkIds": [
+        "ar4amh",
+        "sc13cgr"
+      ]
+    },
+    {
+      "id": 314239,
+      "name": "RoadCraft",
+      "artworkIds": [
+        "ar3nry"
+      ]
+    },
+    {
+      "id": 214417,
+      "name": "The Finals",
+      "artworkIds": []
+    },
+    {
+      "id": 52189,
+      "name": "Grand Theft Auto VI",
+      "artworkIds": [
+        "scpsp8",
+        "sc10vlm",
+        "sc10vlv",
+        "sc10vlu"
+      ]
+    },
+    {
+      "id": 26401,
+      "name": "Star Wars Battlefront II",
+      "artworkIds": [
+        "fwgykf6zduu6xtoyh4ap"
+      ]
+    },
+    {
+      "id": 211196,
+      "name": "Call to Arms: Gates of Hell - Ostfront",
+      "artworkIds": []
+    },
+    {
+      "id": 397811,
+      "name": "Machine Party",
+      "artworkIds": []
+    },
+    {
+      "id": 281275,
+      "name": "Buckshot Roulette",
+      "artworkIds": []
+    },
+    {
+      "id": 3225,
+      "name": "No Man's Sky",
+      "artworkIds": [
+        "hlv3vnzamh1l3pdc2omn",
+        "slbfwlrvqjrgvrvfghrk",
+        "bynzojxiouy00pqw1utm"
+      ]
+    },
+    {
+      "id": 119171,
+      "name": "Baldur's Gate III",
+      "artworkIds": [
+        "ar3tfx"
+      ]
+    },
+    {
+      "id": 9730,
+      "name": "Firewatch",
+      "artworkIds": [
+        "svdcnhawrdapmikkav3i",
+        "qlapgaeuto9xntsonbz3"
+      ]
+    },
+    {
+      "id": 1877,
+      "name": "Cyberpunk 2077",
+      "artworkIds": [
+        "scxw05",
+        "ar3m0j",
+        "c6gonpyuhueh0eq38n8l"
+      ]
+    },
+    {
+      "id": 1942,
+      "name": "The Witcher 3: Wild Hunt",
+      "artworkIds": []
+    },
+    {
+      "id": 26472,
+      "name": "Disco Elysium",
+      "artworkIds": [
+        "ar4m9",
+        "ar4ytw"
+      ]
+    },
+    {
+      "id": 185246,
+      "name": "Alan Wake II",
+      "artworkIds": [
+        "scmnck",
+        "scmnco"
+      ]
+    },
+    {
+      "id": 103329,
+      "name": "Control",
+      "artworkIds": [
+        "ar5c0",
+        "xbmyupl5qae3c3txekoa"
+      ]
+    },
+    {
+      "id": 225582,
+      "name": "Control Resonant",
+      "artworkIds": [
+        "sc10td3"
+      ]
+    },
+    {
+      "id": 75235,
+      "name": "Ghost of Tsushima",
+      "artworkIds": []
+    },
+    {
+      "id": 9498,
+      "name": "Deus Ex: Mankind Divided",
+      "artworkIds": []
+    },
+    {
+      "id": 37001,
+      "name": "Ori and the Will of the Wisps",
+      "artworkIds": []
+    },
+    {
+      "id": 112874,
+      "name": "Horizon Forbidden West",
+      "artworkIds": []
+    },
+    {
+      "id": 19564,
+      "name": "Death Stranding",
+      "artworkIds": []
+    },
+    {
+      "id": 228530,
+      "name": "Death Stranding 2: On the Beach",
+      "artworkIds": []
+    },
+    {
+      "id": 217592,
+      "name": "Pacific Drive",
+      "artworkIds": [
+        "scl9oq",
+        "scl9oj",
+        "scix2h"
+      ]
+    },
+    {
+      "id": 25076,
+      "name": "Red Dead Redemption 2",
+      "artworkIds": [
+        "dhw6ucx9laj5esv6rngn",
+        "kcfpf8wa8esalk0qkpo5"
+      ]
+    },
+    {
+      "id": 138906,
+      "name": "The Invincible",
+      "artworkIds": [
+        "sc9cle",
+        "sc9clg"
+      ]
+    },
+    {
+      "id": 8347,
+      "name": "The Long Dark",
+      "artworkIds": [
+        "sc8kwu"
+      ]
+    },
+    {
+      "id": 252836,
+      "name": "Jusant",
+      "artworkIds": []
+    },
+    {
+      "id": 90558,
+      "name": "Satisfactory",
+      "artworkIds": [
+        "sct1xa"
+      ]
+    },
+    {
+      "id": 11737,
+      "name": "Outer Wilds",
+      "artworkIds": [
+        "g3wcomoxrsuet9cuhl9q"
+      ]
+    },
+    {
+      "id": 107215,
+      "name": "SnowRunner",
+      "artworkIds": []
+    },
+    {
+      "id": 9254,
+      "name": "Subnautica",
+      "artworkIds": []
+    },
+    {
+      "id": 320140,
+      "name": "Subnautica 2",
+      "artworkIds": [
+        "scu85v",
+        "scu8a1"
+      ]
+    }
+  ]
+}

@@ -40,7 +40,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   const tints = new WeakMap<LiquidLens, string | null>();
   const updateTint = (lens: LiquidLens) => {
     const material = materialFor(lens.el);
-    const popup = lens.el.closest('[role="dialog"], [role="alertdialog"], [role="tooltip"], [data-slot="combobox-content"]');
+    const popup = lens.el.closest('[role="dialog"], [role="alertdialog"], [role="tooltip"], [role="menu"], [data-slot="combobox-content"]');
     const clear = material !== "bar" && !popup && lens.el.closest('[data-glass-tone="clear"]');
     const tint = clear ? null : themeTint(popup && material === "panel" ? .55 : materials[material].opacity);
     if (tints.get(lens) === tint) return;

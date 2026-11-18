@@ -18,6 +18,20 @@ pnpm install
 pnpm dev                   # http://localhost:3000
 ```
 
+### Artwork selecteren
+
+Open `/artworks`. De publieke curator begint met de huidige rotatie
+en selectie, toont alle IGDB-artwork en screenshots en kan games toevoegen
+via de gamekiezer uit de planner. Klik een thumbnail voor een preview met
+dezelfde renderer als de homepage; de checkbox bepaalt onafhankelijk of je
+de afbeelding bewaart. Voortgang wordt in deze browser opgeslagen. **Export**
+downloadt `artwork-curation.json`: `{ version: 1, games: [{ id, name, artworkIds }] }`.
+Een lege `artworkIds`-lijst betekent dat geen afbeelding van die game is gekozen.
+Naast Export staat in development een **Save & apply**-knop. Deze schrijft
+`lib/artwork-selection.json`; de homepage gebruikt daarna precies die games en
+afbeeldingen. Commit dit bestand om de selectie mee te deployen. `null` behoudt
+de oorspronkelijke rotatie. Het save-endpoint is buiten development uitgeschakeld.
+
 ### Bot
 
 ```bash
