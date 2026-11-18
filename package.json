@@ -7,7 +7,6 @@
     "node": "24.22.3"
   },
   "scripts": {
-    "postinstall": "node scripts/patch-shaders.mjs",
     "dev": "TZ=UTC next dev",
     "build": "next build",
     "start": "next start",
