@@ -104,7 +104,7 @@ async function gameQuery(query: string, search?: string): Promise<Game[]> {
     const image = (id: string | undefined, size: string) =>
       id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
     return (search ? rankSearchResults(data, search, 12) : data).map((game) => {
-      const artworks = [...new Set(backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => image(art.image_id, "t_1080p")!))];
+      const artworks = [...new Set(backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => image(art.image_id, "t_1080p_2x")!))];
       return {
         id: game.id,
         name: game.name,

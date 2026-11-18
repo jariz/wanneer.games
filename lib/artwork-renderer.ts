@@ -82,7 +82,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   function draw(now: number) {
     frame = 0;
     if (destroyed || !gl) return;
-    const dpr = Math.min(devicePixelRatio, 1.5);
+    const dpr = Math.min(devicePixelRatio, 2);
     const box = region.getBoundingClientRect();
     const origin = canvas.getBoundingClientRect();
     const cssHeight = Math.ceil(box.bottom - origin.top);
