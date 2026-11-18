@@ -3,6 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer ui-sdk {
+  /* UI SDK injects this after hydration; keep closed content hidden on the first paint too. */
+  :where([data-slot][hidden]:not([hidden="until-found"])) {
+    display: none !important;
+  }
+}
+
 @layer base {
   /* Kiwis' green is the default, so pages without a clan (404, errors) match the homepage. */
   :root {
