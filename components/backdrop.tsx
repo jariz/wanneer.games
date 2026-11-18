@@ -74,7 +74,7 @@ export function BackdropProvider({ backgrounds, featured, children }: { backgrou
   );
 }
 
-export function Backdrop() {
+export function Backdrop({ live = false }: { live?: boolean }) {
   const { active, previous } = useBackdrop();
   const nearby = [...new Set([previous, active])].filter((game): game is Game => Boolean(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -124,7 +124,7 @@ export function Backdrop() {
             />
           ))}
         </div>
-        <LiveSpecular onCanvas={setEffect} />
+        {live && <LiveSpecular onCanvas={setEffect} />}
         <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-transparent [:root[data-lens-active]_&]:hidden" />
       </div>
     </>

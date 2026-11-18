@@ -18,7 +18,7 @@ export function formatDate(date: string | number | Date, options: Intl.DateTimeF
   return new Intl.DateTimeFormat("nl-NL", { timeZone: amsterdam, ...options }).format(new Date(date));
 }
 
-export function sessionTiming(session: Session | undefined, now: number) {
+export function sessionTiming(session: Pick<Session, "start" | "end"> | undefined, now: number) {
   if (!session) return { live: false, seconds: 0, days: "00", hours: "00", minutes: "00", ticks: "00" };
   const live = now >= new Date(session.start).getTime() && now < new Date(session.end).getTime();
   const seconds = Math.max(0, Math.floor((new Date(session.start).getTime() - now) / 1000));

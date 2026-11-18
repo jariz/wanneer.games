@@ -7,6 +7,8 @@ import { Plus } from "lucide-react";
 import { SiYoutube } from "react-icons/si";
 import { clans, isClan, type Clan } from "@/shared/clans";
 import type { Game } from "@/lib/game-types";
+import { sessionTiming, type Session } from "@/lib/session-display";
+import { useNow } from "@/hooks/use-now";
 import { Backdrop, BackdropProvider } from "./backdrop";
 import { PlanningAccess, PlanningButton } from "./planning-access";
 import AgentBridge from "./agent-bridge";
@@ -29,19 +31,25 @@ function ClanTabs() {
   );
 }
 
-export default function AppShell({ access, featured, backgrounds, children }: {
-  access: ClanAccess; featured: Record<Clan, Game | null>; backgrounds: Game[]; children: React.ReactNode;
+export default function AppShell({ access, backdrops, backgrounds, initialNow, children }: {
+  access: ClanAccess;
+  backdrops: Record<Clan, { featured: Game | null; sessions: Pick<Session, "start" | "end">[] }>;
+  backgrounds: Game[];
+  initialNow: number;
+  children: React.ReactNode;
 }) {
   const params = useParams<{ group: string }>();
   const pathname = usePathname();
+  const now = useNow(initialNow);
   if (!isClan(params.group)) return children;
   const group = params.group;
+  const live = backdrops[group].sessions.some((session) => sessionTiming(session, now).live);
 
   return (
     <PlanningAccess group={group} {...access[group]}>
-      <BackdropProvider backgrounds={backgrounds} featured={featured[group]}>
+      <BackdropProvider backgrounds={backgrounds} featured={backdrops[group].featured}>
         <div className="relative flex min-h-dvh flex-col" data-clan={group} data-glass-tone={pathname.endsWith("/inplannen") ? "dark" : "clear"}>
-          <Backdrop />
+          <Backdrop live={live} />
           <AgentBridge />
           <a href="#inhoud" data-liquid-ignore="" className="fixed -top-20 left-5 z-[999] rounded-md bg-brand p-4 text-canvas focus:top-3">Naar inhoud</a>
           <Tabs value={group} className="flex flex-1 flex-col">
