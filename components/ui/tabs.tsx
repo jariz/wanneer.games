@@ -13,7 +13,7 @@ function TabsList({ className, children, ...props }: Omit<Styled<typeof TabsList
   return (
     <TabsListPrimitive className={cn("glass-control group/tabs relative inline-flex rounded-lg border border-white/10 p-[3px]", className)} data-hydrated={hydrated || undefined} {...props}>
       {children}
-      <TabsIndicator className="pointer-events-none absolute left-[var(--active-tab-left)] top-[var(--active-tab-top)] hidden h-[var(--active-tab-height)] w-[var(--active-tab-width)] rounded-md border border-brand/60 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.2)] transition-[left,top,width,height] duration-200 group-data-[hydrated]/tabs:block data-[activation-direction=none]:transition-none" />
+      <TabsIndicator className="pointer-events-none absolute left-0 top-0 hidden h-[var(--active-tab-height)] w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)] translate-y-[var(--active-tab-top)] transform-gpu rounded-md border border-brand/60 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.2)] transition-[transform] duration-200 group-data-[hydrated]/tabs:block data-[activation-direction=none]:transition-none motion-safe:will-change-transform motion-reduce:transition-none" />
     </TabsListPrimitive>
   );
 }
