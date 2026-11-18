@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus } from "lucide-react";
+import { useEffect } from "react";
 import { dateLabel, formatDate, sessionTiming, type Session } from "@/lib/session-display";
 import { useBackdrop } from "./backdrop";
 import PageContainer from "./page-container";
@@ -8,14 +9,14 @@ import { PlanningButton } from "./planning-access";
 import { Button } from "./ui/button";
 import { Eyebrow } from "./ui/typography";
 
-function Countdown({ session, now }: { session: Session | undefined; now: number }) {
+function Countdown({ session, now, live }: { session: Session | undefined; now: number; live: boolean }) {
   const timing = sessionTiming(session, now);
-  if (!session) return <div className="my-6 text-5xl font-semibold tracking-tight text-quiet">Nog niets<br />ingepland.</div>;
-  if (timing.live) return (
-    <div className="mb-4 mt-3 text-[54px] phone:mb-7 font-semibold leading-none tracking-[-3px] phone:text-[73px]">
+  if (live) return (
+    <div className="mb-4 mt-3 font-countdown text-[54px] phone:mb-7 font-semibold leading-none tracking-[-3px] phone:text-[73px]">
       Nu <em className="not-italic text-brand">bezig.</em>
     </div>
   );
+  if (!session) return <div className="my-6 text-5xl font-semibold tracking-tight text-quiet">Nog niets<br />ingepland.</div>;
   const units = Number(timing.days) > 0
     ? [{ value: timing.days, label: "DAGEN" }, { value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }]
     : [{ value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }, { value: timing.ticks, label: "SECONDEN" }];
@@ -57,13 +58,18 @@ function ArtworkSwitcher() {
 }
 
 export default function SessionHero({ next, now }: { next: Session | undefined; now: number }) {
-  const live = sessionTiming(next, now).live;
+  const live = true;
+  const { setLive } = useBackdrop();
+  useEffect(() => {
+    setLive(live);
+    return () => setLive(false);
+  }, [live, setLive]);
   return (
     <section className="relative min-h-[56.25vw] phone:min-h-[max(460px,calc(100svh_-_226px))]" aria-label="Volgende sessie" data-testid="session-hero">
       <PageContainer className="relative flex min-h-[inherit] flex-col pt-[calc(56.25vw_-_32px)] phone:pt-8">
         <div className="mt-auto pb-4 pt-2 phone:pb-7 wide:pb-10 wide:pt-4">
           {!live && <p className="mb-2 text-xs text-quiet phone:text-[13px]">{next ? "Begint over" : "Nog geen sessie gepland"}</p>}
-          <Countdown session={next} now={now} />
+           <Countdown session={next} now={now} live={live} />
           {next?.game && (
             <>
               <Eyebrow className="text-[8px]">GAME</Eyebrow>

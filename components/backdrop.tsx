@@ -4,6 +4,9 @@ import { createContext, useContext, useEffect, useMemo, useCallback, useRef, use
 import type { Game } from "@/lib/game-types";
 import { createArtworkRenderer, type ArtworkRenderer } from "@/lib/artwork-renderer";
 import { advanceArtwork, type ArtworkPosition } from "@/lib/artwork-slideshow";
+import dynamic from "next/dynamic";
+
+const LiveSpecular = dynamic(() => import("./live-specular"), { ssr: false });
 
 const autoplayInterval = 10000;
 
@@ -13,6 +16,8 @@ type BackdropState = {
   previous: Game | undefined;
   step: (offset: number) => void;
   pin: (game: Game | null) => void;
+  live: boolean;
+  setLive: (live: boolean) => void;
 };
 const BackdropContext = createContext<BackdropState | null>(null);
 
@@ -34,6 +39,7 @@ export function usePinnedBackdrop(game: Game | null) {
 // A pinned game leads and stays put; otherwise the backgrounds rotate.
 export function BackdropProvider({ backgrounds, featured, children }: { backgrounds: Game[]; featured: Game | null; children: ReactNode }) {
   const [pinned, pin] = useState<Game | null>(null);
+  const [live, setLive] = useState(false);
   const lead = pinned ?? featured;
   const artwork = useMemo(() => {
     const games = lead ? [lead, ...backgrounds.filter((game) => game.id !== lead.id)] : backgrounds;
@@ -65,18 +71,19 @@ export function BackdropProvider({ backgrounds, featured, children }: { backgrou
   }, [autoplay, position, step]);
 
   return (
-    <BackdropContext value={{ artwork, active: artwork[index], previous: currentPosition.previous === undefined ? undefined : artwork[currentPosition.previous], step, pin }}>
+    <BackdropContext value={{ artwork, active: artwork[index], previous: currentPosition.previous === undefined ? undefined : artwork[currentPosition.previous], step, pin, live, setLive }}>
       {children}
     </BackdropContext>
   );
 }
 
 export function Backdrop() {
-  const { active, previous } = useBackdrop();
+  const { active, previous, live } = useBackdrop();
   const nearby = [...new Set([previous, active])].filter((game): game is Game => Boolean(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<ArtworkRenderer | null>(null);
+  const setEffect = useCallback((canvas: HTMLCanvasElement | null) => renderer.current?.setEffect(canvas), []);
 
   useEffect(() => {
     if (matchMedia("(prefers-reduced-transparency: reduce)").matches) return;
@@ -120,6 +127,7 @@ export function Backdrop() {
             />
           ))}
         </div>
+        {live && active?.artwork && <LiveSpecular onCanvas={setEffect} />}
         <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-transparent [:root[data-lens-active]_&]:hidden" />
       </div>
     </>

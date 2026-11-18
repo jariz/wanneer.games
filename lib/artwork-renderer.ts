@@ -14,6 +14,9 @@ uniform vec2 sizeB;
 uniform float hasA;
 uniform float hasB;
 uniform float progress;
+uniform sampler2D effect;
+uniform vec4 effectRegion;
+uniform float effectOpacity;
 out vec4 color;
 
 vec3 sampleArt(sampler2D image, vec2 size, vec2 p, float zoom) {
@@ -36,10 +39,17 @@ void main() {
   if (hasB > 0.5) artwork = mix(artwork, sampleArt(imageB, sizeB, p, mix(1.035, 1.0, progress)), progress);
   float fade = y < 0.5 ? mix(0.0, 0.3, y * 2.0) : mix(0.3, 1.0, (y - 0.5) * 2.0);
   color = vec4(mix(artwork, base, fade), 1.0);
+  if (effectOpacity > 0.0) {
+    vec2 uv = (p - effectRegion.xy) / effectRegion.zw;
+    if (all(greaterThanEqual(uv, vec2(0.0))) && all(lessThanEqual(uv, vec2(1.0)))) {
+      vec4 light = texture(effect, uv);
+      color.rgb = mix(color.rgb, light.rgb, light.a * effectOpacity);
+    }
+  }
 }`;
 
 type Texture = { texture: WebGLTexture; width: number; height: number };
-export type ArtworkRenderer = { setImage(url: string | null): void; destroy(): void };
+export type ArtworkRenderer = { setImage(url: string | null): void; setEffect(canvas: HTMLCanvasElement | null): void; destroy(): void };
 
 export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement): ArtworkRenderer | null {
   // liquidGL captures this canvas on later frames, after the browser has presented it.
@@ -67,9 +77,20 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const uniform = (name: string) => gl.getUniformLocation(program, name);
-  const u = Object.fromEntries(["resolution", "region", "base", "imageA", "imageB", "sizeA", "sizeB", "hasA", "hasB", "progress"].map((key) => [key, uniform(key)]));
+  const u = Object.fromEntries(["resolution", "region", "base", "imageA", "imageB", "sizeA", "sizeB", "hasA", "hasB", "progress", "effect", "effectRegion", "effectOpacity"].map((key) => [key, uniform(key)]));
   gl.uniform1i(u.imageA, 0);
   gl.uniform1i(u.imageB, 1);
+  gl.uniform1i(u.effect, 2);
+  const effectTexture = gl.createTexture()!;
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, effectTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+  let effect: HTMLCanvasElement | null = null;
+  let effectStarted = 0;
   const loaded = new Map<string, Texture>();
   let current: Texture | null = null;
   let previous: Texture | null = null;
@@ -77,6 +98,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   let started = 0;
   let frame = 0;
   let destroyed = false;
+  let visible = true;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
   function draw(now: number) {
@@ -106,18 +128,35 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       gl.uniform2f(index ? u.sizeB : u.sizeA, image?.width ?? 1, image?.height ?? 1);
     }
     gl.uniform1f(u.progress, progress);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, effectTexture);
+    const hasEffect = effect && effect.width > 0 && effect.height > 0;
+    gl.uniform1f(u.effectOpacity, hasEffect ? Math.min(1, (now - effectStarted) / 2000) : 0);
+    if (effect && hasEffect) {
+      const effectBox = effect.getBoundingClientRect();
+      gl.uniform4f(u.effectRegion, (effectBox.left - origin.left) * dpr, (effectBox.top - origin.top) * dpr, effectBox.width * dpr, effectBox.height * dpr);
+      // Composite the live WebGPU canvas before liquidGL samples this backdrop.
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, effect);
+    }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     canvas.dispatchEvent(new Event("artwork-frame"));
-    if (progress < 1) request();
+    if (progress < 1 || effect) request();
   }
   function request() {
-    if (!frame && !destroyed) frame = requestAnimationFrame(draw);
+    if (!frame && !destroyed && visible && !document.hidden) frame = requestAnimationFrame(draw);
   }
   const resize = new ResizeObserver(request);
   resize.observe(region);
   const clan = new MutationObserver(request);
   if (region.parentElement) clan.observe(region.parentElement, { attributes: true, attributeFilter: ["data-clan"] });
   addEventListener("resize", request);
+  const intersection = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible) request();
+  });
+  intersection.observe(region);
+  document.addEventListener("visibilitychange", request);
+  reducedMotion.addEventListener("change", request);
   request();
 
   function showImage(image: Texture | null) {
@@ -127,6 +166,11 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     request();
   }
   return {
+    setEffect(source) {
+      effect = source;
+      effectStarted = performance.now();
+      request();
+    },
     setImage(url) {
       wanted = url;
       if (!url) return showImage(null);
@@ -160,9 +204,13 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       destroyed = true;
       cancelAnimationFrame(frame);
       resize.disconnect();
+      intersection.disconnect();
+      document.removeEventListener("visibilitychange", request);
+      reducedMotion.removeEventListener("change", request);
       clan.disconnect();
       removeEventListener("resize", request);
       for (const image of loaded.values()) gl.deleteTexture(image.texture);
+      gl.deleteTexture(effectTexture);
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
     },
