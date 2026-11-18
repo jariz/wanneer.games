@@ -84,15 +84,16 @@ export function Backdrop({ live = false }: { live?: boolean }) {
 
   useEffect(() => {
     if (matchMedia("(prefers-reduced-transparency: reduce)").matches) return;
-    const created = createArtworkRenderer(canvasRef.current!, regionRef.current!);
-    if (!created) return;
-    renderer.current = created;
-    document.documentElement.dataset.lensActive = "";
     let disposed = false;
     let destroyGlass: (() => void) | undefined;
-    import("@/lib/liquid-glass").then(({ createLiquidGlass }) => {
-      if (!disposed) destroyGlass = createLiquidGlass(canvasRef.current!);
-    }).catch((error) => console.warn("Liquid glass unavailable:", error));
+    const created = createArtworkRenderer(canvasRef.current!, regionRef.current!, () => {
+      document.documentElement.dataset.lensActive = "";
+      import("@/lib/liquid-glass").then(({ createLiquidGlass }) => {
+        if (!disposed) destroyGlass = createLiquidGlass(canvasRef.current!);
+      }).catch((error) => console.warn("Liquid glass unavailable:", error));
+    });
+    if (!created) return;
+    renderer.current = created;
     return () => {
       disposed = true;
       destroyGlass?.();
@@ -106,7 +107,7 @@ export function Backdrop({ live = false }: { live?: boolean }) {
 
   return (
     <>
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-x-0 top-0 -z-10 hidden w-full [:root[data-lens-active]_&]:block" aria-hidden="true" />
+      <canvas ref={canvasRef} className="pointer-events-none invisible absolute inset-x-0 top-0 -z-10 w-full [:root[data-lens-active]_&]:visible" aria-hidden="true" />
       <div
         ref={regionRef}
         className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden portrait:overflow-visible phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"

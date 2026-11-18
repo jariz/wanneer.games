@@ -51,7 +51,7 @@ void main() {
 type Texture = { texture: WebGLTexture; width: number; height: number };
 export type ArtworkRenderer = { setImage(url: string | null): void; setEffect(canvas: HTMLCanvasElement | null): void; destroy(): void };
 
-export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement): ArtworkRenderer | null {
+export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement, onReady?: () => void): ArtworkRenderer | null {
   // liquidGL captures this canvas on later frames, after the browser has presented it.
   const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, preserveDrawingBuffer: true });
   if (!gl) return null;
@@ -99,6 +99,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   let frame = 0;
   let destroyed = false;
   let visible = true;
+  let ready = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
   function draw(now: number) {
@@ -118,7 +119,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     }
     gl.viewport(0, 0, width, height);
     const rgb = getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim().split(/\s+/).map(Number);
-    const progress = reducedMotion.matches ? 1 : Math.min(1, (now - started) / 1000);
+    const progress = !ready || reducedMotion.matches ? 1 : Math.min(1, (now - started) / 1000);
     gl.uniform2f(u.resolution, width, height);
     // Include the nav in the artwork crop instead of stretching one image row behind it.
     gl.uniform4f(u.region, (box.left - origin.left) * dpr, 0, box.width * dpr, artworkHeight * dpr);
@@ -140,6 +141,10 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, effect);
     }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!ready && (current || !wanted)) {
+      ready = true;
+      onReady?.();
+    }
     canvas.dispatchEvent(new Event("artwork-frame"));
     if (progress < 1 || effect) request();
   }
@@ -163,7 +168,8 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   function showImage(image: Texture | null) {
     previous = current;
     current = image;
-    started = performance.now();
+    // The server-rendered image is already visible; only later images crossfade.
+    started = ready ? performance.now() : performance.now() - 1000;
     request();
   }
   return {
