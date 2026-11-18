@@ -20,7 +20,7 @@ function Countdown({ session, now, live }: { session: Session | undefined; now: 
     ? [{ value: timing.days, label: "DAGEN" }, { value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }]
     : [{ value: timing.hours, label: "UREN" }, { value: timing.minutes, label: "MINUTEN" }, { value: timing.ticks, label: "SECONDEN" }];
   return (
-    <div className="mb-4 flex w-fit items-start gap-[26px] phone:mb-7 phone:gap-[34px]" aria-label={`Nog ${Number(timing.days)} dagen, ${Number(timing.hours)} uur en ${Number(timing.minutes)} minuten`}>
+    <div className="mb-4 flex w-fit items-start gap-[26px] phone:mb-7 phone:gap-[34px]" data-glass-ticker="" aria-label={`Nog ${Number(timing.days)} dagen, ${Number(timing.hours)} uur en ${Number(timing.minutes)} minuten`}>
       {units.map((unit, index) => (
         <div className="relative flex flex-col" key={unit.label}>
           {index > 0 && <span className="absolute -left-5 top-1 text-[40px] font-extralight text-quiet/70 phone:-left-[25px] phone:top-2 phone:text-[55px] wide:top-4" aria-hidden="true">:</span>}

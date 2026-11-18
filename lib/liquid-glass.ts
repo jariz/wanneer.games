@@ -50,13 +50,37 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   let frame = 0;
   let destroyed = false;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+  let tickerStale = false;
   const refresh = () => {
     if (refreshTimer) return;
     refreshTimer = setTimeout(() => {
       refreshTimer = undefined;
+      tickerStale = false;
       // Refresh static page layers only when the scene changes.
       liquidGL.registerDynamic([]);
     }, 100);
+  };
+  const behindLens = (element: Element) => {
+    const a = element.getBoundingClientRect();
+    for (const lensElement of lenses.keys()) {
+      const b = lensElement.getBoundingClientRect();
+      if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) return true;
+    }
+    return false;
+  };
+  // Ticking text (the countdown) would otherwise recapture the page every
+  // second. Recapture only while a lens can see it; catch up when one scrolls over.
+  const sceneChanged = (records: MutationRecord[]) => records.some((record) => {
+    const ticker = record.type === "characterData" && record.target.parentElement?.closest("[data-glass-ticker]");
+    if (!ticker) return true;
+    if (behindLens(ticker)) return true;
+    tickerStale = true;
+    return false;
+  });
+  const scrolled = () => {
+    if (!tickerStale) return;
+    const ticker = document.querySelector("[data-glass-ticker]");
+    if (ticker && behindLens(ticker)) refresh();
   };
 
   function sync() {
@@ -143,7 +167,8 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   const interact = () => {
     if (updateInteraction()) liquidGL.render();
   };
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((records) => {
+    if (!sceneChanged(records)) return;
     schedule();
     refresh();
   });
@@ -155,6 +180,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
   // Images can finish loading without a DOM mutation.
   document.addEventListener("load", refresh, true);
   addEventListener("resize", schedule);
+  addEventListener("scroll", scrolled, { passive: true });
   const interactionEvents = ["pointerover", "pointerout", "focusin", "focusout"] as const;
   // Submit changed optics during input, alongside native CSS hover/focus.
   // A full DOM sync and liquidGL's ticker would otherwise add frame delays.
@@ -169,6 +195,7 @@ export function createLiquidGlass(artwork: HTMLCanvasElement) {
     document.removeEventListener("toggle", schedule, true);
     document.removeEventListener("load", refresh, true);
     removeEventListener("resize", schedule);
+    removeEventListener("scroll", scrolled);
     for (const event of interactionEvents) document.removeEventListener(event, interact);
     cancelAnimationFrame(frame);
     for (const [element, lens] of lenses) {
