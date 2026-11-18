@@ -4,9 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useCallback, useRef, use
 import type { BackdropArtwork } from "@/lib/artwork";
 import { createArtworkRenderer, type ArtworkRenderer } from "@/lib/artwork-renderer";
 import { advanceArtwork, type ArtworkPosition } from "@/lib/artwork-slideshow";
-import dynamic from "next/dynamic";
-
-const LiveSpecular = dynamic(() => import("./live-specular"), { ssr: false });
+import LiveSpecular from "./live-specular";
 
 const autoplayInterval = 10000;
 
@@ -80,7 +78,11 @@ export function Backdrop({ live = false }: { live?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<ArtworkRenderer | null>(null);
-  const setEffect = useCallback((canvas: HTMLCanvasElement | null) => renderer.current?.setEffect(canvas), []);
+  const liveBox = useRef<[HTMLElement | null, boolean]>([null, false]);
+  const setLive = useCallback((box: HTMLElement | null, compact: boolean) => {
+    liveBox.current = [box, compact];
+    renderer.current?.setLive(box, compact);
+  }, []);
 
   useEffect(() => {
     const region = regionRef.current!;
@@ -108,6 +110,7 @@ export function Backdrop({ live = false }: { live?: boolean }) {
       return () => { delete region.dataset.fallback; };
     }
     renderer.current = created;
+    created.setLive(...liveBox.current);
     return () => {
       disposed = true;
       destroyGlass?.();
@@ -140,7 +143,7 @@ export function Backdrop({ live = false }: { live?: boolean }) {
             />
           ))}
         </div>
-        {live && <LiveSpecular onCanvas={setEffect} />}
+        {live && <LiveSpecular onBox={setLive} />}
         <div className="absolute inset-0 hidden bg-gradient-to-t from-canvas via-canvas/30 to-transparent group-data-[fallback]/backdrop:block" />
       </div>
     </>
