@@ -152,6 +152,7 @@ void main() {
 }`;
 
 type Texture = { texture: WebGLTexture; width: number; height: number };
+const stillLiveTime = 6.679;
 export type ArtworkRenderer = { setImage(url: string | null): void; setLive(box: HTMLElement | null, compact: boolean): void; destroy(): void };
 
 export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement, onReady?: () => void, onError?: () => void): ArtworkRenderer | null {
@@ -227,11 +228,13 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
     }
     gl.uniform1f(u.progress, progress);
     // The live light edge is drawn into the artwork, so liquidGL refracts it too.
+    // Reduced motion holds one frame where all three spots are lit.
     const hasLive = liveBox && liveBox.width > 0 && liveBox.height > 0;
-    gl.uniform1f(u.liveOpacity, hasLive ? Math.min(1, (now - liveStarted) / 2000) : 0);
+    const still = reducedMotion.matches;
+    gl.uniform1f(u.liveOpacity, hasLive ? still ? 1 : Math.min(1, (now - liveStarted) / 2000) : 0);
     if (hasLive) {
       gl.uniform4f(u.liveRegion, (liveBox.left - origin.left) * dpr, (liveBox.top - origin.top) * dpr, liveBox.width * dpr, liveBox.height * dpr);
-      gl.uniform1f(u.liveTime, (now - liveStarted) / 1000);
+      gl.uniform1f(u.liveTime, still ? stillLiveTime : (now - liveStarted) / 1000);
     }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (!ready && !waitingForImage) {
@@ -239,7 +242,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       onReady?.();
     }
     canvas.dispatchEvent(new Event("artwork-frame"));
-    if (progress < 1 || live) request();
+    if (progress < 1 || (live && !still)) request();
   }
   function request() {
     if (!frame && !destroyed && visible && !document.hidden) frame = requestAnimationFrame(draw);

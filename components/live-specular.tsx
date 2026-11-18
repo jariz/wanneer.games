@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-const preference = "(prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce)";
+// Reduced motion still shows the edge; the renderer holds it still.
+const preference = "(prefers-reduced-transparency: reduce)";
 function subscribe(onChange: () => void) {
   const media = matchMedia(preference);
   media.addEventListener("change", onChange);
