@@ -6,7 +6,7 @@ import LockedPage from "@/components/locked-page";
 import Planner from "@/components/planner";
 import { PlanningButton } from "@/components/planning-access";
 import { clans, isClan } from "@/shared/clans";
-import { getGameRotation } from "@/lib/games";
+import { getDefaultGames } from "@/lib/games";
 import { hasPlanningAccess } from "@/lib/planning-auth";
 import { currentPlanningMonth, getAvailability } from "@/lib/planning";
 import { amsterdam } from "@/lib/session-display";
@@ -32,7 +32,7 @@ export default async function PlanningPage({ params }: { params: Promise<{ group
   const month = currentPlanningMonth();
   const [initialSlots, games] = await Promise.all([
     getAvailability(group, month).catch(() => undefined),
-    getGameRotation(),
+    getDefaultGames(),
   ]);
   return (
     <Planner

@@ -8,8 +8,10 @@ import {
   StringSelectMenuInteraction,
 } from "discord.js";
 import fetchSlots from "../../../shared/fetchSlots.ts";
+import { isAfterPollClose, maxPollAnswers } from "./pollLimits.ts";
 
 const TIMEZONE = "Europe/Amsterdam";
+const pickerLifetime = 5 * 60 * 1000;
 
 export const formatSlot = (date: Date): string =>
   date.toLocaleDateString("nl-NL", {
@@ -65,7 +67,8 @@ const buildComponents = (
     indices.some((i) => !selectedIndices.includes(i))
   );
 
-  if (availableDays.length > 0) {
+  const room = mode === "poll" ? maxPollAnswers - selectedIndices.length : 1;
+  if (availableDays.length > 0 && room > 0) {
     const daySelect = new StringSelectMenuBuilder()
       .setCustomId("slot_day")
       .setPlaceholder("Kies een dag...")
@@ -80,15 +83,15 @@ const buildComponents = (
   }
 
   // Row 2: Time picker for selected day
-  if (currentDayKey !== null) {
+  if (currentDayKey !== null && room > 0) {
     const dayIndices = dayGroups.get(currentDayKey) ?? [];
-    const remainingInDay = dayIndices.filter((i) => !selectedIndices.includes(i));
+    const remainingInDay = dayIndices.filter((i) => !selectedIndices.includes(i)).slice(0, 25);
 
     if (remainingInDay.length > 0) {
       const timeSelect = new StringSelectMenuBuilder()
         .setCustomId("slot_add")
-        .setPlaceholder("Voeg tijden toe...")
-
+        .setPlaceholder(mode === "poll" ? "Voeg tijden toe..." : "Kies een tijd...")
+        .setMaxValues(Math.min(room, remainingInDay.length))
         .addOptions(
           remainingInDay.map((i) => ({
             label: formatTime(allSlots[i]),
@@ -120,7 +123,7 @@ const buildComponents = (
     .setCustomId("slot_confirm")
     .setLabel(mode === "poll" ? "Maak poll" : "Inplannen")
     .setStyle(ButtonStyle.Primary)
-    .setDisabled(selectedIndices.length === 0);
+    .setDisabled(selectedIndices.length < (mode === "poll" ? 2 : 1));
   rows.push(new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton));
 
   return rows;
@@ -143,11 +146,15 @@ export const runSlotPicker = async (
 ): Promise<Date[] | null> => {
   await interaction.deferReply({ ephemeral: true });
 
-  const slots = await fetchSlots(group);
+  const slots = (await fetchSlots(group)).filter((slot) =>
+    mode === "book" || isAfterPollClose(slot, Date.now() + pickerLifetime),
+  );
 
   if (slots.length === 0) {
     await interaction.editReply({
-      content: "❌ Geen beschikbare tijden gevonden in de komende 10 dagen.",
+      content: mode === "poll"
+        ? "❌ Geen tijden gevonden na afloop van de 24-uurs poll. Gebruik /inplannen voor een eerdere sessie."
+        : "❌ Geen beschikbare tijden gevonden in de komende 10 dagen.",
     });
     return null;
   }
@@ -164,7 +171,7 @@ export const runSlotPicker = async (
 
   const collector = reply.createMessageComponentCollector({
     componentType: ComponentType.StringSelect,
-    time: 5 * 60 * 1000,
+    time: pickerLifetime,
   });
 
   collector.on("collect", async (selectInteraction: StringSelectMenuInteraction) => {
@@ -173,7 +180,7 @@ export const runSlotPicker = async (
     } else if (selectInteraction.customId === "slot_add") {
       const values = selectInteraction.values.map(Number);
       selectedIndices =
-        mode === "poll" ? [...selectedIndices, ...values].sort((a, b) => a - b) : values;
+        mode === "poll" ? [...new Set([...selectedIndices, ...values])].sort((a, b) => a - b).slice(0, maxPollAnswers) : values;
       currentDayKey = null;
     } else if (selectInteraction.customId === "slot_remove") {
       const values = selectInteraction.values.map(Number);
@@ -190,7 +197,7 @@ export const runSlotPicker = async (
     const buttonInteraction = await reply.awaitMessageComponent({
       componentType: ComponentType.Button,
       filter: (i) => i.customId === "slot_confirm",
-      time: 5 * 60 * 1000,
+      time: pickerLifetime,
     });
 
     collector.stop();

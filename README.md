@@ -29,10 +29,15 @@ downloadt `artwork-curation.json`: `{ version: 1, games: [{ id, name, artworkIds
 Een lege `artworkIds`-lijst betekent dat geen afbeelding van die game is gekozen.
 Naast Export staat in development een **Save & apply**-knop. Deze schrijft
 `lib/artwork-selection.json`; de homepage gebruikt daarna precies die games en
-afbeeldingen. Commit dit bestand om de selectie mee te deployen. `null` behoudt
-de oorspronkelijke rotatie. Het save-endpoint is buiten development uitgeschakeld.
+afbeeldingen. Commit dit bestand om de selectie mee te deployen. De standaardlijst
+in de planner staat los van deze selectie. Het save-endpoint is buiten development uitgeschakeld.
 
 ### Bot
+
+Beperk wie `/wanneer` en `/inplannen` mag gebruiken via Discord → Serverinstellingen
+→ Integraties. De bot draait zonder database. Eindigt een poll terwijl de bot
+offline is, controleer dan eerst de agenda en gebruik `/inplannen` voor de winnaar
+als er nog geen sessie staat.
 
 ```bash
 pnpm --filter wanneer-games-bot dev

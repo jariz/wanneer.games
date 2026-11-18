@@ -1,12 +1,16 @@
 import { clans, isClan } from "../../../shared/clans.ts";
 import { formatSlot } from "./slotPicker.ts";
 
-// Everything needed to finish a poll lives in the poll message itself: the
-// question holds the group and game, the answers hold the slots. Nothing is
-// stored, so a restart can't replay old polls.
+export const buildSlotLine = (slots: Date[]) =>
+  `-# ${slots.map((slot) => `<t:${Math.floor(slot.getTime() / 1000)}:t>`).join(" · ")}`;
 
-// Answers only show weekday, day, month and time, so the slot is recovered by
-// formatting every candidate after the poll was created until one matches
+export function readSlotLine(content: string, index: number) {
+  const line = content.split("\n").find((part) => part.startsWith("-# <t:"));
+  const seconds = line && [...line.matchAll(/<t:(\d+):t>/g)][index]?.[1];
+  return seconds ? new Date(Number(seconds) * 1000) : undefined;
+}
+
+// Older polls only stored localized labels.
 const SLOT_STEP_MS = 5 * 60 * 1000;
 const SLOT_SEARCH_MS = 14 * 24 * 60 * 60 * 1000;
 

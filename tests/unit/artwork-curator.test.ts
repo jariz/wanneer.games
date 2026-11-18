@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAgent } from "@ui-sdk/react/agent";
 import { expect, test, vi } from "vitest";
 vi.mock("@/app/planning-actions", () => ({ findPlanningGames: vi.fn() }));
-import { CuratorEditor } from "@/app/artworks/curator";
+import { ArtworkCurator } from "@/app/artworks/curator";
 import { exportCuration, type CuratorDraft } from "@/lib/artwork-curation";
 
 test("the agent can discover curator controls and persist a selection", async () => {
@@ -24,9 +24,10 @@ test("the agent can discover curator controls and persist a selection", async ()
   const initial: CuratorDraft = { version: 1, games: [{
     id: 1, name: "Example game", candidates: [{ imageId: "ar1", kind: "artwork" }, { imageId: "ar2", kind: "artwork" }], selected: [],
   }] };
+  client.setQueryData(["artwork-curator"], initial);
   try {
     await act(async () => root.render(createElement(QueryClientProvider, { client },
-      createElement(CuratorEditor, { initial }))));
+      createElement(ArtworkCurator))));
     await act(async () => {
       const result = await agent.act({ steps: [{ ref: "Games to curate", action: "setValue", args: ["1"] }] });
       expect(result.ok, result.error?.message).toBe(true);

@@ -13,13 +13,14 @@ import { bookSlot } from "./booking.ts";
 import {
   buildGameLink,
   buildQuestion,
+  buildSlotLine,
   parseGameSlug,
   parseQuestion,
   parseSlot,
+  readSlotLine,
 } from "./pollFormat.ts";
 import { gameBySlug, type Game } from "../games.ts";
-
-const POLL_DURATION_HOURS = 24;
+import { isAfterPollClose, maxPollAnswers, pollDurationHours } from "./pollLimits.ts";
 
 const fetchPollMessage = async (
   channel: SendableChannels,
@@ -40,14 +41,18 @@ export const createPoll = async (
   game: Game | null,
   selectedSlots: Date[],
 ): Promise<void> => {
+  if (selectedSlots.length < 2 || selectedSlots.length > maxPollAnswers || selectedSlots.some((slot) => !isAfterPollClose(slot, Date.now()))) {
+    await interaction.editReply({ content: "❌ Kies 2 tot 10 tijden die na afloop van de 24-uurs poll liggen." });
+    return;
+  }
   const pollMessage = await channel.send({
-    ...(game?.slug && { content: buildGameLink(game.name, game.slug) }),
+    content: [game?.slug && buildGameLink(game.name, game.slug), buildSlotLine(selectedSlots)].filter(Boolean).join("\n"),
     poll: {
       question: { text: buildQuestion(group, game?.name) },
       answers: selectedSlots.map((slot) => ({
         text: formatSlot(slot),
       })),
-      duration: POLL_DURATION_HOURS,
+      duration: pollDurationHours,
       allowMultiselect: true,
       layoutType: PollLayoutType.Default,
     },
@@ -119,9 +124,9 @@ export const handlePollResult = async (message: Message): Promise<void> => {
   if (!pollMessage?.poll || !parsed) return;
 
   // Most votes wins; ties go to the earliest slot, which comes first
-  let winner: { text: string | null; voteCount: number } | undefined;
-  for (const answer of pollMessage.poll.answers.values()) {
-    if (answer.voteCount > (winner?.voteCount ?? 0)) winner = answer;
+  let winner: { text: string | null; voteCount: number; index: number } | undefined;
+  for (const [index, answer] of [...pollMessage.poll.answers.values()].sort((a, b) => a.id - b.id).entries()) {
+    if (answer.voteCount > (winner?.voteCount ?? 0)) winner = { text: answer.text, voteCount: answer.voteCount, index };
   }
 
   if (!winner?.text) {
@@ -131,14 +136,14 @@ export const handlePollResult = async (message: Message): Promise<void> => {
     return;
   }
 
-  const slot = parseSlot(winner.text, pollMessage.createdTimestamp);
+  const slot = readSlotLine(pollMessage.content, winner.index) ?? parseSlot(winner.text, pollMessage.createdTimestamp);
   if (!slot) {
     console.error(`Could not read a slot from poll answer "${winner.text}"`);
     await channel.send(`❌ Kon de gekozen tijd niet lezen: ${winner.text}`);
     return;
   }
   if (slot.getTime() <= Date.now()) {
-    console.log(`Skipping poll ${pollMessageId}: ${slot.toISOString()} has passed`);
+    await channel.send("❌ De gekozen tijd is al voorbij. Gebruik /wanneer om opnieuw te stemmen.");
     return;
   }
 
@@ -151,6 +156,6 @@ export const handlePollResult = async (message: Message): Promise<void> => {
     await bookSlot(channel, parsed.group, slot, game);
   } catch (err) {
     console.error("Failed to create booking:", err);
-    await channel.send(`❌ Kon sessie niet inplannen: ${String(err)}`);
+    await channel.send("❌ Inplannen is niet bevestigd. Controleer de agenda voordat je opnieuw probeert.");
   }
 };

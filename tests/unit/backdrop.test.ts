@@ -3,10 +3,10 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { Backdrop, BackdropProvider, useBackdrop } from "@/components/backdrop";
-import type { Game } from "@/lib/game-types";
+import type { BackdropArtwork } from "@/lib/artwork";
 
-const first: Game = { id: 1, name: "First", cover: null, artwork: "one.jpg", artworks: ["one.jpg", "two.jpg", "two.jpg"] };
-const second: Game = { id: 2, name: "Second", cover: null, artwork: "three.jpg", artworks: ["three.jpg"] };
+const first: BackdropArtwork = { id: 1, name: "First", artwork: "one.jpg", artworks: ["one.jpg", "two.jpg", "two.jpg"] };
+const second: BackdropArtwork = { id: 2, name: "Second", artwork: "three.jpg", artworks: ["three.jpg"] };
 
 test("slides step and autoplay per artwork, with stable backwards navigation and pinned previews", async () => {
   vi.useFakeTimers();
@@ -20,7 +20,7 @@ test("slides step and autoplay per artwork, with stable backwards navigation and
     state = useBackdrop();
     return createElement(Backdrop);
   }
-  const render = (backgrounds: Game[], featured: Game | null = null) =>
+  const render = (backgrounds: BackdropArtwork[], featured: BackdropArtwork | null = null) =>
     act(async () => root.render(createElement(BackdropProvider, { backgrounds, featured } as Parameters<typeof BackdropProvider>[0], createElement(Probe))));
   try {
     await render([first, second]);
@@ -49,7 +49,9 @@ test("slides step and autoplay per artwork, with stable backwards navigation and
     expect(state.active?.artwork).toBe("one.jpg");
     await render([first, second], { ...first, artwork: "two.jpg" });
     expect(state.active?.artwork).toBe("two.jpg");
-    await act(async () => state.pin(second));
+    await act(async () => state.pin(999));
+    expect(state.active?.artwork).toBe("two.jpg");
+    await act(async () => state.pin(second.id));
     expect(state.active?.artwork).toBe("three.jpg");
     await render([], null);
     await act(async () => state.pin(null));

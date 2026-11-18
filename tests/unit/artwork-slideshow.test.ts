@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { advanceArtwork, type ArtworkPosition } from "@/lib/artwork-slideshow";
-import type { Game } from "@/lib/game-types";
+import type { BackdropArtwork } from "@/lib/artwork";
 
-const slide = (id: number, artwork: string): Game => ({ id, name: String(id), artwork, artworks: [artwork], cover: null });
+const slide = (id: number, artwork: string): BackdropArtwork => ({ id, name: String(id), artwork, artworks: [artwork] });
 
 test("recent games are penalized regardless of how many images they have", () => {
   const slides = [...Array.from({ length: 101 }, (_, index) => slide(1, `a${index}`)), slide(2, "b")];

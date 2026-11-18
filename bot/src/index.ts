@@ -20,6 +20,7 @@ client.on(Events.MessageCreate, (message) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.inGuild()) return;
   if (interaction.isAutocomplete()) {
     const focused = interaction.options.getFocused(true);
     if (focused.name !== "game") return;

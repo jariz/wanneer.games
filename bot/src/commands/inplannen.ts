@@ -30,10 +30,14 @@ export async function execute(
   }
 
   try {
-    await bookSlot(channel, group, selectedSlots[0], game);
+    const announced = await bookSlot(channel, group, selectedSlots[0], game);
+    if (!announced) {
+      await interaction.editReply({ content: "✅ Sessie ingepland. De aankondiging kon niet worden geplaatst." }).catch(console.error);
+      return;
+    }
   } catch (err) {
     console.error("Failed to create booking:", err);
-    await interaction.editReply({ content: `❌ Kon sessie niet inplannen: ${String(err)}` });
+    await interaction.editReply({ content: "❌ Inplannen is niet bevestigd. Controleer de agenda voordat je opnieuw probeert." });
     return;
   }
   // The public announcement says it all

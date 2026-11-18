@@ -10,12 +10,14 @@ export const bookSlot = async (
   group: string,
   start: Date,
   game: Game | null,
-): Promise<void> => {
+): Promise<boolean> => {
   await createBooking({ group, start, game: game?.name, igdbGameId: game?.igdbGameId });
 
-  await fetch(env.NEXT_INVALIDATE_URL, { method: "POST" }).catch((err) =>
-    console.error("Failed to invalidate bookings:", err),
-  );
+  void fetch(env.NEXT_INVALIDATE_URL, { method: "POST", signal: AbortSignal.timeout(5_000) })
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    })
+    .catch((error) => console.error("Failed to invalidate bookings:", error));
 
   const formattedDate = start.toLocaleDateString("nl-NL", {
     weekday: "long",
@@ -27,7 +29,12 @@ export const bookSlot = async (
   });
   const clan = isClan(group) ? `${clans[group].emoji} ${clans[group].label}` : group;
 
-  await channel.send(
-    `✅ Ingepland voor ${clan}! **${formattedDate}**${game ? ` - ${game.name}` : ""}`,
-  );
+  const announcement = `✅ Ingepland voor ${clan}! **${formattedDate}**${game ? ` - ${game.name}` : ""}`;
+  try {
+    await channel.send({ content: announcement, allowedMentions: { parse: [] } });
+    return true;
+  } catch (error) {
+    console.error("Booking succeeded, but the Discord announcement failed:", error);
+    return false;
+  }
 };

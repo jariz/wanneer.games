@@ -41,7 +41,7 @@ export default function Planner({ group, initialMonth, initialSlots, games, toda
   const [day, setDay] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [game, setGame] = useState<GameChoice>(null);
-  usePinnedBackdrop(choiceGame(game));
+  usePinnedBackdrop(choiceGame(game)?.id ?? null);
 
   const slots = useQuery({
     queryKey: ["slots", group, month],

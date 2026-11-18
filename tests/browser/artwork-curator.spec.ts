@@ -48,7 +48,7 @@ test("curate with the keyboard, add a game, persist and export", async ({ page }
   await page.route("**/artworks/data*", (route) => {
     const url = new URL(route.request().url());
     const added = url.searchParams.has("id");
-    return route.fulfill({ json: url.searchParams.has("q") ? [{ id: 2, name: "Second game", cover: null, artwork: null, artworks: [] }] : [{
+    return route.fulfill({ json: url.searchParams.has("q") ? [{ id: 2, name: "Second game", cover: null }] : [{
       id: added ? 2 : 1, name: added ? "Second game" : "First game",
       candidates: added ? [{ imageId: "ar2", kind: "artwork", width: 3840, height: 2160 }] : [
         { imageId: "ar1", kind: "artwork", width: 3840, height: 2160 },
@@ -172,4 +172,40 @@ test("All previews only enabled artwork and updates its owning game", async ({ p
   await expect(page.getByRole("checkbox")).toHaveCount(2);
   await page.getByRole("button", { name: "Next artwork", exact: true }).click();
   await expect(page.getByTestId("artwork-preview")).toHaveAttribute("data-image-id", "ar3");
+});
+
+test("overlapping additions survive an out-of-order response and client navigation", async ({ page }) => {
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/artworks/data*", async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const id = params.get("id");
+    const query = params.get("q");
+    if (query) return route.fulfill({ json: [{ id: query === "Second" ? 2 : 3, name: `${query} game`, cover: null }] });
+    if (id === "2") await pending;
+    return route.fulfill({ json: id ? [{ id: Number(id), name: id === "2" ? "Second game" : "Third game", candidates: [], selected: [] }] : [] });
+  });
+  await page.goto("/artworks");
+  try {
+    const picker = page.getByRole("combobox", { name: "Add a game" });
+    const started = page.waitForRequest("**/artworks/data?id=2");
+    await picker.fill("Second");
+    await page.getByRole("option", { name: "Second game" }).click();
+    await started;
+    await picker.fill("Third");
+    await page.getByRole("option", { name: "Third game" }).click();
+    const third = page.getByRole("tab", { name: /Third game/ });
+    const second = page.getByRole("tab", { name: /Second game/ });
+    await expect(third).toBeVisible();
+    release();
+    await expect(second).toBeVisible();
+    await expect(third).toBeVisible();
+    await page.getByRole("link", { name: "wanneer.games" }).click();
+    await expect(page).toHaveURL("/");
+    await page.goBack();
+    await expect(second).toBeVisible();
+    await expect(third).toBeVisible();
+  } finally {
+    release();
+  }
 });

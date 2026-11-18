@@ -78,5 +78,5 @@ export async function findPlanningGames(group: string, query: string) {
     return [];
   }
   if (!allowPlanningAttempt(`games:${group}`, 120)) return [];
-  return searchGames(query);
+  return searchGames(query).catch(() => []);
 }

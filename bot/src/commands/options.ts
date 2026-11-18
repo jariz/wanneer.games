@@ -1,11 +1,13 @@
 import {
   ChatInputCommandInteraction,
+  InteractionContextType,
   SlashCommandBuilder,
 } from "discord.js";
 import { clans } from "../../../shared/clans.ts";
 
 export const addSessionOptions = (builder: SlashCommandBuilder) =>
   builder
+    .setContexts(InteractionContextType.Guild)
     .addStringOption((option) =>
       option
         .setName("game")

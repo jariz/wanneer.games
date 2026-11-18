@@ -2,14 +2,8 @@ import "server-only";
 import { env } from "@/env";
 import { igdbQuery, rankSearchResults, searchClause } from "@/shared/igdb";
 import type { Game } from "./game-types";
-import { artworkSelectionSchema, artworkUrl, type CuratorGame } from "./artwork-curation";
-import savedSelection from "./artwork-selection.json";
 
-// Null keeps the existing rotation until the curator saves its first selection.
-const selection = savedSelection === null ? null : artworkSelectionSchema.parse(savedSelection);
-
-// Game IDs define the rotation; artwork is always resolved through IGDB.
-const rotation = [
+const defaultGameIds = [
   28489, // Ready or Not
   2950, // Age of Empires II: HD Edition
   299, // Age of Empires III
@@ -34,147 +28,38 @@ const rotation = [
   348330, // Forza Horizon 6
   314239, // RoadCraft
   214417, // The Finals
-  52189, // Grand Theft Auto VI
   26401, // Star Wars Battlefront II (2017)
   211196, // Call to Arms: Gates of Hell - Ostfront
   397811, // Machine Party
   281275, // Buckshot Roulette
   3225, // No Man's Sky
   119171, // Baldur's Gate III
-  9730, // Firewatch
-  1877, // Cyberpunk 2077
-  1942, // The Witcher 3: Wild Hunt
-  26472, // Disco Elysium
-  185246, // Alan Wake II
-  103329, // Control
-  225582, // Control Resonant
-  75235, // Ghost of Tsushima
-  9498, // Deus Ex: Mankind Divided
-  37001, // Ori and the Will of the Wisps
-  112874, // Horizon Forbidden West
+  75235, // Ghost of Tsushima (Legends)
+  25076, // Red Dead Redemption 2 (Red Dead Online)
+  90558, // Satisfactory
+  107215, // SnowRunner
+  320140, // Subnautica 2
 ];
-const fields = "fields name,cover.image_id,artworks.image_id,artworks.artwork_type,artworks.width,artworks.height,screenshots.image_id,screenshots.width,screenshots.height;";
-
-type Artwork = { image_id: string; artwork_type?: number; width?: number; height?: number };
-
-// IGDB artwork types that work as a background: key art without logo, artwork, concept art, historical artwork.
-// Logos, icons and covers are left out.
-const backgroundTypes = [1, 2, 4, 15];
-const conceptArtOnly = new Set([1877, 1942]);
-const includeScreenshots = new Set([185246]); // Alan Wake II
-const additionalArtworks = new Map([
-  [1877, [
-    "ig0frvvkkz4jx7cyqt3f",
-    "pgrmxtckblxm3pfdu5hu",
-    "c6gonpyuhueh0eq38n8l",
-  ]],
-]);
-
-// Artworks IGDB types as plain art that still don't work as a background.
-const excludedArtworks = new Set([
-  "ar4u6z", // Ghost of Tsushima: bright white sky and grass on the left
-  "j7dbzjr8ddshnaewmb4d", // Ghost of Tsushima: duplicate composition
-  "ar3sed", // Horizon Forbidden West: duplicate composition
-  "ar7s2", // Age of Empires IV: logo card
-  "ar6i4l", "ar6i4m", "ar6i4n", // Grand Theft Auto VI: logo over the art
-  "ar4rk", "ar4rl", "ar4rn", // Star Wars Battlefront II: logo over the art
-  "ar5rh3", // The Finals: logo mark
-  "ar6hoy", // Buckshot Roulette: almost entirely black
-  "ar5vr3", // Forza Horizon 6: car on a white background
-  "ar74f", // Sea of Thieves: logo on black
-  "ar6bln", // ARC Raiders
-  "s81kuicumnoogbv7pmel", // No Man's Sky
-  "ar3sas", "ar69b1", "ar3tfx", // Schedule I, Call of Duty: Black Ops 6, Baldur's Gate III: too dark
-]);
-
-function backgroundArtworks(gameId: number, artworks: Artwork[] = [], screenshots: Artwork[] = []) {
-  const candidates = artworks
-    .filter((art) => !conceptArtOnly.has(gameId) || art.artwork_type === 4)
-    .filter((art) => backgroundTypes.includes(art.artwork_type ?? 1));
-  if (includeScreenshots.has(gameId)) candidates.push(...screenshots);
-  const filtered = candidates
-    .filter((art) => !excludedArtworks.has(art.image_id))
-    // IGDB's alpha_channel flag is set on plenty of opaque artwork, so only shape is checked: square or portrait images don't fill the hero.
-    .filter((art) => (art.width ?? 16) / (art.height ?? 9) >= 1.3);
-  return [...filtered, ...(additionalArtworks.get(gameId) ?? []).map((image_id) => ({ image_id }))];
-}
 
 async function gameQuery(query: string, search?: string): Promise<Game[]> {
-  try {
-    const data = await igdbQuery<{ id: number; name: string; total_rating_count?: number; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: Artwork[] }>(
-      `${search ? fields.replace("fields ", "fields total_rating_count,") : fields} ${query}`,
-      { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
-      { init: { next: { revalidate: 3600 } } },
-    );
-    const image = (id: string | undefined, size: string) =>
-      id ? `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg` : null;
-    return (search ? rankSearchResults(data, search, 12) : data).map((game) => {
-      const curated = selection?.games.find((item) => item.id === game.id);
-      const artworks = curated
-        ? curated.artworkIds.map((id) => artworkUrl(id, true))
-        : [...new Set(backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => image(art.image_id, "t_1080p_2x")!))];
-      return {
-        id: game.id,
-        name: game.name,
-        cover: image(game.cover?.image_id, "t_cover_big"),
-        artwork: artworks[Math.floor(Math.random() * artworks.length)] ?? null,
-        artworks,
-      };
-    });
-  } catch { return []; }
+  const data = await igdbQuery<{ id: number; name: string; total_rating_count?: number; cover?: { image_id: string } }>(
+    `fields name,cover.image_id${search ? ",total_rating_count" : ""}; ${query}`,
+    { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
+    { init: { next: { revalidate: 3600 } } },
+  );
+  return (search ? rankSearchResults(data, search, 12) : data).map(({ id, name, cover }) => ({
+    id,
+    name,
+    cover: cover ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${cover.image_id}.jpg` : null,
+  }));
 }
 
-export async function getGameRotation() {
-  if (selection) {
-    if (!selection.games.length) return [];
-    const metadata = await gameQuery(`where id = (${selection.games.map((game) => game.id).join(",")}); limit ${selection.games.length};`);
-    return selection.games.map((game) => {
-      const artworks = game.artworkIds.map((id) => artworkUrl(id, true));
-      return {
-        id: game.id, name: game.name, cover: metadata.find((item) => item.id === game.id)?.cover ?? null,
-        artwork: artworks[Math.floor(Math.random() * artworks.length)] ?? null, artworks,
-      };
-    });
-  }
-  const games = await gameQuery(`where id = (${rotation.join(",")}); limit ${rotation.length};`);
-  return games.sort((a, b) => rotation.indexOf(a.id) - rotation.indexOf(b.id));
+export async function getDefaultGames() {
+  const games = await gameQuery(`where id = (${defaultGameIds.join(",")}); limit ${defaultGameIds.length};`).catch(() => []);
+  return games.sort((a, b) => defaultGameIds.indexOf(a.id) - defaultGameIds.indexOf(b.id));
 }
 
 export async function searchGames(query: string) {
   const clause = searchClause(query, 60);
   return clause ? gameQuery(clause, query) : [];
-}
-
-export async function getGame(id: number) {
-  if (!Number.isSafeInteger(id) || id < 1) return null;
-  return (await gameQuery(`where id = ${id}; limit 1;`))[0] ?? null;
-}
-
-export async function getCuratorGames(id?: number): Promise<CuratorGame[]> {
-  const ids = id === undefined ? selection?.games.map((game) => game.id) ?? rotation : [id];
-  if (!ids.length) return [];
-  const data = await igdbQuery<{ id: number; name: string; cover?: { image_id: string }; artworks?: Artwork[]; screenshots?: Artwork[] }>(
-    `${fields} where id = (${ids.join(",")}); limit ${ids.length};`,
-    { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
-    { init: { next: { revalidate: 3600 } } },
-  );
-  return data.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)).map((game) => {
-    const selected = selection?.games.find((item) => item.id === game.id)?.artworkIds
-      ?? backgroundArtworks(game.id, game.artworks, game.screenshots).map((art) => art.image_id);
-    const candidates = [
-      ...(game.artworks ?? []).map((art) => ({ imageId: art.image_id, kind: "artwork" as const, width: art.width, height: art.height })),
-      ...(game.screenshots ?? []).map((art) => ({ imageId: art.image_id, kind: "screenshot" as const, width: art.width, height: art.height })),
-      ...(additionalArtworks.get(game.id) ?? []).map((imageId) => ({ imageId, kind: "artwork" as const })),
-    ];
-    for (const imageId of selected) {
-      if (!candidates.some((art) => art.imageId === imageId)) candidates.push({ imageId, kind: "artwork" });
-    }
-    return {
-      id: game.id,
-      name: game.name,
-      cover: game.cover ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg` : null,
-      candidates: [...new Map(candidates.map((art) => [art.imageId, art])).values()],
-      selected: [...new Set(selected)],
-    };
-  });
 }

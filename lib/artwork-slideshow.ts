@@ -1,8 +1,8 @@
-import type { Game } from "./game-types";
+import type { BackdropArtwork } from "./artwork";
 
 export type ArtworkPosition = { history: number[]; cursor: number; previous?: number; remaining?: number[] };
 
-function shuffleArtwork(slides: Game[], indices: number[], recent: number[], random: () => number) {
+function shuffleArtwork(slides: BackdropArtwork[], indices: number[], recent: number[], random: () => number) {
   const remaining = new Set(indices);
   const deck: number[] = [];
   while (remaining.size) {
@@ -25,7 +25,7 @@ function shuffleArtwork(slides: Game[], indices: number[], recent: number[], ran
   return deck;
 }
 
-export function advanceArtwork(slides: Game[], position: ArtworkPosition, direction: number, random = Math.random): ArtworkPosition {
+export function advanceArtwork(slides: BackdropArtwork[], position: ArtworkPosition, direction: number, random = Math.random): ArtworkPosition {
   if (slides.length < 2 || !direction) return position;
   const current = position.history[position.cursor];
   const cursor = position.cursor + Math.sign(direction);

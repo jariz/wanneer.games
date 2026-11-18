@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import { Plus } from "lucide-react";
 import { SiYoutube } from "react-icons/si";
 import { clans, isClan, type Clan } from "@/shared/clans";
-import type { Game } from "@/lib/game-types";
+import type { BackdropArtwork } from "@/lib/artwork";
 import { sessionTiming, type Session } from "@/lib/session-display";
 import { useNow } from "@/hooks/use-now";
 import { Backdrop, BackdropProvider } from "./backdrop";
@@ -33,8 +33,8 @@ function ClanTabs() {
 
 export default function AppShell({ access, backdrops, backgrounds, initialNow, children }: {
   access: ClanAccess;
-  backdrops: Record<Clan, { featured: Game | null; sessions: Pick<Session, "start" | "end">[] }>;
-  backgrounds: Game[];
+  backdrops: Record<Clan, { sessions: Pick<Session, "start" | "end" | "igdbGameId">[] }>;
+  backgrounds: BackdropArtwork[];
   initialNow: number;
   children: React.ReactNode;
 }) {
@@ -43,11 +43,12 @@ export default function AppShell({ access, backdrops, backgrounds, initialNow, c
   const now = useNow(initialNow);
   if (!isClan(params.group)) return children;
   const group = params.group;
-  const live = backdrops[group].sessions.some((session) => sessionTiming(session, now).live);
+  const next = backdrops[group].sessions.find(({ end }) => Date.parse(end) > now);
+  const { live } = sessionTiming(next, now);
 
   return (
     <PlanningAccess group={group} {...access[group]}>
-      <BackdropProvider backgrounds={backgrounds} featured={backdrops[group].featured}>
+      <BackdropProvider backgrounds={backgrounds} featured={backgrounds.find((art) => art.id === next?.igdbGameId) ?? null}>
         <div className="relative flex min-h-dvh flex-col" data-clan={group} data-glass-tone={pathname.endsWith("/inplannen") ? "dark" : "clear"}>
           <Backdrop live={live} />
           <AgentBridge />

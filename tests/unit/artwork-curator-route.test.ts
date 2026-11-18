@@ -1,11 +1,11 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-vi.mock("@/env", () => ({ env: {} }));
-vi.mock("@/lib/games", () => ({ getCuratorGames: vi.fn(async () => []) }));
-vi.mock("@/shared/igdb", () => ({ igdbQuery: vi.fn(), rankSearchResults: vi.fn(), searchClause: vi.fn() }));
+vi.mock("@/lib/artwork", () => ({ getCuratorGames: vi.fn(async () => []) }));
+vi.mock("@/lib/games", () => ({ searchGames: vi.fn() }));
 
 import { GET } from "@/app/artworks/data/route";
-import { getCuratorGames } from "@/lib/games";
+import { getCuratorGames } from "@/lib/artwork";
+import { searchGames } from "@/lib/games";
 
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 
@@ -21,4 +21,9 @@ test("invalid game IDs never reach IGDB", async () => {
     expect((await GET(new Request(`http://localhost/artworks/data?id=${id}`))).status).toBe(400);
   }
   expect(getCuratorGames).not.toHaveBeenCalled();
+});
+
+test("curator search reports an upstream error", async () => {
+  vi.mocked(searchGames).mockRejectedValueOnce(new Error("IGDB unavailable"));
+  expect((await GET(new Request("http://localhost/artworks/data?q=Valheim"))).status).toBe(502);
 });

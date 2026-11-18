@@ -13,7 +13,6 @@ export default async function Page({ params }: { params: Promise<{ group: string
     start: booking.date.toISOString(),
     end: booking.end.toISOString(),
     game: booking.game ?? "",
-    igdbGameId: booking.igdbGameId,
   }));
   return <Dashboard group={group} sessions={sessions} initialNow={now} />;
 }

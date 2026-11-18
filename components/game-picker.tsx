@@ -25,7 +25,6 @@ function Cover({ game, className }: { game: Game | null; className: string }) {
   );
 }
 
-// A game from the list (with artwork and an IGDB link) or any name typed in.
 type GamePickerProps = {
   games: Game[]; value: GameChoice; onValueChange: (value: GameChoice) => void;
   allowCustomValue?: boolean;
@@ -38,7 +37,7 @@ type GamePickerProps = {
 export default function GamePicker({ group, games, value, onValueChange, searchGames, searchKey, allowCustomValue = true, label = "Game", placeholder = "Kies of typ een game…" }: GamePickerProps) {
   const [field, setField] = useState<HTMLDivElement | null>(null);
   const [term, setTerm] = useState("");
-  const debouncedTerm = useDebouncedValue(term.slice(0, 80), 350);
+  const debouncedTerm = useDebouncedValue(term, 350);
   const searching = term.length >= minQueryLength;
   const search = useQuery({
     queryKey: ["games", searchKey ?? group, debouncedTerm],
@@ -55,7 +54,7 @@ export default function GamePicker({ group, games, value, onValueChange, searchG
       onValueChange={(next) => onValueChange(next === "" ? null : next)}
       allowCustomValue={allowCustomValue}
       // Only typing searches; choosing, clearing or Escape put the text back to a game name or nothing.
-      onQueryChange={(query, details) => setTerm(details.reason === "input-change" ? query.trim() : "")}
+      onQueryChange={(query, details) => setTerm(details.reason === "input-change" ? query.trim().slice(0, 80) : "")}
       itemToValue={(choice) => (isGame(choice) ? String(choice.id) : choice ?? "")}
       itemToLabel={choiceName}
       isItemEqualToValue={(item, current) => (isGame(item) && isGame(current) ? item.id === current.id : item === current)}

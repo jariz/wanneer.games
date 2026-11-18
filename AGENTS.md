@@ -40,9 +40,10 @@ tag with ten-minute revalidation. Successful planning invalidates that tag.
 `POST /invalidate-bookings` also supports external invalidation.
 
 Dates and booking windows use `Europe/Amsterdam`. `shared/` contains Cal
-helpers used by both the website and Discord bot. `lib/games.ts` resolves
-game artwork dynamically through IGDB with Twitch OAuth; the IGDB client in
-`shared/igdb.ts` also backs the bot's game autocomplete.
+helpers used by both the website and Discord bot. `lib/games.ts` fetches planner
+game metadata through IGDB. `lib/artwork-selection.json` defines the backdrop
+rotation separately. The IGDB client in `shared/igdb.ts` also backs the bot's
+game autocomplete.
 
 Environment keys are documented in `.env.dist`. Clan planning passwords need
 at least four characters and aren't case-sensitive; the rate-limited unlock form

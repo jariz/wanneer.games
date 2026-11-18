@@ -51,7 +51,7 @@ void main() {
 type Texture = { texture: WebGLTexture; width: number; height: number };
 export type ArtworkRenderer = { setImage(url: string | null): void; setEffect(canvas: HTMLCanvasElement | null): void; destroy(): void };
 
-export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement, onReady?: () => void): ArtworkRenderer | null {
+export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLElement, onReady?: () => void, onError?: () => void): ArtworkRenderer | null {
   // liquidGL captures this canvas on later frames, after the browser has presented it.
   const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, preserveDrawingBuffer: true });
   if (!gl) return null;
@@ -100,6 +100,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   let destroyed = false;
   let visible = true;
   let ready = false;
+  let waitingForImage = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
   function draw(now: number) {
@@ -141,7 +142,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, effect);
     }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    if (!ready && (current || !wanted)) {
+    if (!ready && !waitingForImage) {
       ready = true;
       onReady?.();
     }
@@ -163,12 +164,15 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
   intersection.observe(region);
   document.addEventListener("visibilitychange", request);
   reducedMotion.addEventListener("change", request);
+  const contextLost = () => onError?.();
+  canvas.addEventListener("webglcontextlost", contextLost);
   request();
 
   function showImage(image: Texture | null) {
+    waitingForImage = false;
     previous = current;
     current = image;
-    // The server-rendered image is already visible; only later images crossfade.
+    // The canvas fades in as a whole; only later images crossfade within it.
     started = ready ? performance.now() : performance.now() - 1000;
     request();
   }
@@ -183,8 +187,15 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       if (!url) return showImage(null);
       const cached = loaded.get(url);
       if (cached) return showImage(cached);
+      waitingForImage = true;
       const image = new Image();
       image.crossOrigin = "anonymous";
+      image.onerror = () => {
+        if (!destroyed && wanted === url) {
+          ready = false;
+          onError?.();
+        }
+      };
       image.onload = () => {
         if (destroyed) return;
         const texture = gl.createTexture()!;
@@ -214,6 +225,7 @@ export function createArtworkRenderer(canvas: HTMLCanvasElement, region: HTMLEle
       intersection.disconnect();
       document.removeEventListener("visibilitychange", request);
       reducedMotion.removeEventListener("change", request);
+      canvas.removeEventListener("webglcontextlost", contextLost);
       clan.disconnect();
       removeEventListener("resize", request);
       for (const image of loaded.values()) gl.deleteTexture(image.texture);

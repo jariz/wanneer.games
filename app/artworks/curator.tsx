@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Download, Ellipsis, Save, X } from "lucide-react";
 import { Backdrop, BackdropProvider } from "@/components/backdrop";
 import AgentBridge from "@/components/agent-bridge";
@@ -29,13 +29,11 @@ function searchGames(query: string) {
   return request<Game[]>(`?q=${encodeURIComponent(query)}`);
 }
 
-function pickerGame(game: CuratorGame): Game {
-  return { id: game.id, name: game.name, cover: game.cover ?? null, artwork: null, artworks: [] };
-}
-
+const draftKey = ["artwork-curator"] as const;
 export function ArtworkCurator() {
+  const client = useQueryClient();
   const draft = useQuery({
-    queryKey: ["artwork-curator"],
+    queryKey: draftKey,
     queryFn: async (): Promise<CuratorDraft> => {
       try {
         const saved = localStorage.getItem(storageKey);
@@ -56,11 +54,14 @@ export function ArtworkCurator() {
       {draft.isError && <Button onClick={() => void draft.refetch()}>Retry loading</Button>}
     </Container>
   );
-  return <CuratorEditor initial={draft.data} />;
+  return <CuratorEditor games={draft.data.games} changeGames={(change) =>
+    client.setQueryData<CuratorDraft>(draftKey, (draft) => ({ version: 1, games: change(draft?.games ?? []) }))!
+  } />;
 }
 
-export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
-  const [games, setGames] = useState(initial.games);
+type ChangeGames = (games: CuratorGame[]) => CuratorGame[];
+
+function CuratorEditor({ games, changeGames }: { games: CuratorGame[]; changeGames: (change: ChangeGames) => CuratorDraft }) {
   const [activeId, setActiveId] = useState<number | "all">("all");
   const [previewId, setPreviewId] = useState<string>();
   const [saveError, setSaveError] = useState(false);
@@ -81,14 +82,14 @@ export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
   const previewIndex = candidates.indexOf(previewEntry);
   const selectedCount = games.reduce((sum, game) => sum + game.selected.length, 0);
   const featured = previewEntry ? {
-    ...pickerGame(previewEntry.game), artwork: artworkUrl(previewEntry.art.imageId, true), artworks: [artworkUrl(previewEntry.art.imageId, true)],
+    id: previewEntry.game.id, name: previewEntry.game.name, artwork: artworkUrl(previewEntry.art.imageId, true), artworks: [],
   } : null;
   const add = useMutation({
     mutationFn: (id: number) => request<CuratorGame[]>(`?id=${id}`),
     onSuccess: (result) => {
       const game = result[0];
       if (!game) return;
-      if (!games.some((item) => item.id === game.id)) updateGames([...games, { ...game, selected: [] }]);
+      updateGames((current) => current.some((item) => item.id === game.id) ? current : [...current, { ...game, selected: [] }]);
       openGame(game);
     },
   });
@@ -103,11 +104,11 @@ export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
     },
   });
 
-  function updateGames(next: CuratorGame[]) {
+  function updateGames(change: ChangeGames) {
     save.reset();
-    setGames(next);
+    const draft = changeGames(change);
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ version: 1, games: next }));
+      localStorage.setItem(storageKey, JSON.stringify(draft));
       setSaveError(false);
     } catch { setSaveError(true); }
   }
@@ -115,7 +116,7 @@ export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
   function removeGame(id: number) {
     const next = games.filter((game) => game.id !== id);
     const replacement = activeId === id ? next[Math.min(games.findIndex((game) => game.id === id), next.length - 1)] : active;
-    updateGames(next);
+    updateGames((current) => current.filter((game) => game.id !== id));
     if (replacement && activeId === id) openGame(replacement);
     if (!replacement) {
       setActiveId("all");
@@ -134,7 +135,7 @@ export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
   }
 
   function select(ids: string[], gameId = activeId) {
-    updateGames(games.map((game) => game.id === gameId ? { ...game, selected: ids } : game));
+    updateGames((current) => current.map((game) => game.id === gameId ? { ...game, selected: ids } : game));
   }
 
   function show(imageId: string) {
@@ -295,7 +296,7 @@ export function CuratorEditor({ initial }: { initial: CuratorDraft }) {
             <AlertDialogDescription>Uncheck all artwork across all {games.length} games. Your games stay in the list.</AlertDialogDescription>
             <div className="flex justify-end gap-2">
               <AlertDialogClose render={<Button variant="secondary" />}>Cancel</AlertDialogClose>
-              <AlertDialogClose value="confirm" data-agent-confirm="Clears every artwork selection across all games" render={<Button />} onClick={() => updateGames(games.map((game) => ({ ...game, selected: [] })))}>Clear every selection</AlertDialogClose>
+            <AlertDialogClose value="confirm" data-agent-confirm="Clears every artwork selection across all games" render={<Button />} onClick={() => updateGames((current) => current.map((game) => ({ ...game, selected: [] })))}>Clear every selection</AlertDialogClose>
             </div>
           </AlertDialogContent>
         </AlertDialog>

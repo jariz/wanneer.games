@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useCallback, useRef, useState, type ReactNode } from "react";
-import type { Game } from "@/lib/game-types";
+import type { BackdropArtwork } from "@/lib/artwork";
 import { createArtworkRenderer, type ArtworkRenderer } from "@/lib/artwork-renderer";
 import { advanceArtwork, type ArtworkPosition } from "@/lib/artwork-slideshow";
 import dynamic from "next/dynamic";
@@ -11,11 +11,11 @@ const LiveSpecular = dynamic(() => import("./live-specular"), { ssr: false });
 const autoplayInterval = 10000;
 
 type BackdropState = {
-  artwork: Game[];
-  active: Game | undefined;
-  previous: Game | undefined;
+  artwork: BackdropArtwork[];
+  active: BackdropArtwork | undefined;
+  previous: BackdropArtwork | undefined;
   step: (offset: number) => void;
-  pin: (game: Game | null) => void;
+  pin: (gameId: number | null) => void;
 };
 const BackdropContext = createContext<BackdropState | null>(null);
 
@@ -26,27 +26,27 @@ export function useBackdrop() {
 }
 
 // Shows a game's artwork while mounted, e.g. the game chosen in the planner.
-export function usePinnedBackdrop(game: Game | null) {
+export function usePinnedBackdrop(gameId: number | null) {
   const { pin } = useBackdrop();
   useEffect(() => {
-    pin(game?.artwork ? game : null);
+    pin(gameId);
     return () => pin(null);
-  }, [game, pin]);
+  }, [gameId, pin]);
 }
 
 // A pinned game leads and stays put; otherwise the backgrounds rotate.
-export function BackdropProvider({ backgrounds, featured, children }: { backgrounds: Game[]; featured: Game | null; children: ReactNode }) {
-  const [pinned, pin] = useState<Game | null>(null);
-  const lead = pinned ?? featured;
+export function BackdropProvider({ backgrounds, featured, children }: { backgrounds: BackdropArtwork[]; featured: BackdropArtwork | null; children: ReactNode }) {
+  const [pinned, pin] = useState<number | null>(null);
+  const lead = backgrounds.find((game) => game.id === pinned) ?? featured;
   const artwork = useMemo(() => {
     const games = lead ? [lead, ...backgrounds.filter((game) => game.id !== lead.id)] : backgrounds;
     return games.flatMap((game) =>
-      [...new Set([game.artwork, ...game.artworks].filter((image): image is string => Boolean(image)))]
+      [...new Set([game.artwork, ...game.artworks])]
         .map((image) => ({ ...game, artwork: image })),
     );
   }, [backgrounds, lead]);
   // A changed lead starts at its requested image, including curator previews of the same game.
-  const leadKey = lead ? `${lead.id}:${lead.artwork ?? ""}` : undefined;
+  const leadKey = lead ? `${lead.id}:${lead.artwork}` : undefined;
   const [position, setPosition] = useState<ArtworkPosition & { lead: string | undefined }>({ lead: leadKey, history: [0], cursor: 0 });
   const currentPosition = position.lead === leadKey && [...position.history, ...(position.remaining ?? [])].every((index) => index < artwork.length)
     ? position : { history: [0], cursor: 0, previous: undefined };
@@ -76,23 +76,37 @@ export function BackdropProvider({ backgrounds, featured, children }: { backgrou
 
 export function Backdrop({ live = false }: { live?: boolean }) {
   const { active, previous } = useBackdrop();
-  const nearby = [...new Set([previous, active])].filter((game): game is Game => Boolean(game));
+  const nearby = [...new Set([previous, active])].filter((game): game is BackdropArtwork => Boolean(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<ArtworkRenderer | null>(null);
   const setEffect = useCallback((canvas: HTMLCanvasElement | null) => renderer.current?.setEffect(canvas), []);
 
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-transparency: reduce)").matches) return;
-    let disposed = false;
+    const region = regionRef.current!;
     let destroyGlass: (() => void) | undefined;
+    const showFallback = () => {
+      region.dataset.fallback = "";
+      delete document.documentElement.dataset.lensActive;
+      destroyGlass?.();
+      destroyGlass = undefined;
+    };
+    if (matchMedia("(prefers-reduced-transparency: reduce)").matches) {
+      showFallback();
+      return () => { delete region.dataset.fallback; };
+    }
+    let disposed = false;
     const created = createArtworkRenderer(canvasRef.current!, regionRef.current!, () => {
+      delete region.dataset.fallback;
       document.documentElement.dataset.lensActive = "";
       import("@/lib/liquid-glass").then(({ createLiquidGlass }) => {
-        if (!disposed) destroyGlass = createLiquidGlass(canvasRef.current!);
+        if (!disposed && !destroyGlass && region.dataset.fallback === undefined) destroyGlass = createLiquidGlass(canvasRef.current!);
       }).catch((error) => console.warn("Liquid glass unavailable:", error));
-    });
-    if (!created) return;
+    }, showFallback);
+    if (!created) {
+      showFallback();
+      return () => { delete region.dataset.fallback; };
+    }
     renderer.current = created;
     return () => {
       disposed = true;
@@ -100,6 +114,7 @@ export function Backdrop({ live = false }: { live?: boolean }) {
       created.destroy();
       renderer.current = null;
       delete document.documentElement.dataset.lensActive;
+      delete region.dataset.fallback;
     };
   }, []);
 
@@ -107,14 +122,14 @@ export function Backdrop({ live = false }: { live?: boolean }) {
 
   return (
     <>
-      <canvas ref={canvasRef} className="pointer-events-none invisible absolute inset-x-0 top-0 -z-10 w-full [:root[data-lens-active]_&]:visible" aria-hidden="true" />
+      <canvas ref={canvasRef} data-testid="artwork-canvas" className="pointer-events-none absolute inset-x-0 top-0 -z-10 w-full opacity-0 transition-opacity duration-500 motion-reduce:transition-none [:root[data-lens-active]_&]:opacity-100" aria-hidden="true" />
       <div
         ref={regionRef}
-        className="pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden portrait:overflow-visible phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
+        className="group/backdrop pointer-events-none absolute inset-x-0 top-16 -z-10 aspect-video overflow-hidden portrait:overflow-visible phone:top-[76px] phone:h-[max(460px,calc(100svh_-_226px),56.25vw)]"
         aria-hidden="true"
         data-testid="backdrop"
       >
-        <div className="absolute inset-0 overflow-hidden brightness-[.82] [:root[data-lens-active]_&]:hidden">
+        <div className="absolute inset-0 hidden overflow-hidden brightness-[.82] group-data-[fallback]/backdrop:block">
           {nearby.map((game) => (
             <div
               key={`${game.id}:${game.artwork}`}
@@ -126,7 +141,7 @@ export function Backdrop({ live = false }: { live?: boolean }) {
           ))}
         </div>
         {live && <LiveSpecular onCanvas={setEffect} />}
-        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-transparent [:root[data-lens-active]_&]:hidden" />
+        <div className="absolute inset-0 hidden bg-gradient-to-t from-canvas via-canvas/30 to-transparent group-data-[fallback]/backdrop:block" />
       </div>
     </>
   );

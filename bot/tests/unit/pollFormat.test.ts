@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildGameLink,
   buildQuestion,
+  buildSlotLine,
   parseGameSlug,
   parseQuestion,
   parseSlot,
+  readSlotLine,
 } from "../../src/flows/pollFormat.ts";
 import { formatSlot } from "../../src/flows/slotPicker.ts";
 
@@ -55,4 +57,11 @@ describe("parseSlot", () => {
   it("returns undefined for text that isn't a slot", () => {
     expect(parseSlot("morgen", createdAt)).toBeUndefined();
   });
+});
+
+it("stores both occurrences of the repeated Amsterdam hour without ambiguity", () => {
+  const slots = [new Date("2026-10-25T00:30:00Z"), new Date("2026-10-25T01:30:00Z")];
+  const content = `${buildGameLink("Example", "example")}\n${buildSlotLine(slots)}`;
+  expect(slots.map((_, index) => readSlotLine(content, index))).toEqual(slots);
+  expect(readSlotLine(content, 2)).toBeUndefined();
 });
