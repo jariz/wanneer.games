@@ -11,13 +11,14 @@ interface BookingResponse {
     uid?: string;
     status: string;
     start: string;
-    end?: string;
     metadata?: { igdbGameId?: string };
     bookingFieldsResponses: {
       game: string;
     };
   }>;
 }
+
+const SESSION_LENGTH_MS = 5 * 60 * 60_000;
 
 const fetchBookings = async (group: string, allBookings = false) => {
   const today = startOfDay(toZonedTime(new Date(), amsterdam));
@@ -65,7 +66,8 @@ const fetchBookings = async (group: string, allBookings = false) => {
       igdbGameId: booking.metadata?.igdbGameId ? Number(booking.metadata.igdbGameId) : undefined,
       game: booking.bookingFieldsResponses.game,
       date: new Date(booking.start),
-      end: new Date(booking.end ?? new Date(new Date(booking.start).getTime() + 60 * 60_000).toISOString()),
+      // Cal's booked length doesn't reflect real sessions; assume five hours.
+      end: new Date(new Date(booking.start).getTime() + SESSION_LENGTH_MS),
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
   return bookings;

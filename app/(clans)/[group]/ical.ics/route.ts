@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createEvents, EventAttributes } from "ics";
+import { createEvents, DateArray, EventAttributes } from "ics";
 import fetchBookings from "@/lib/fetchBookings";
 
 const getEmoji = (group: string) => {
@@ -10,6 +10,14 @@ const getEmoji = (group: string) => {
       return "🦔";
   }
 };
+
+const toDateArray = (date: Date): DateArray => [
+  date.getUTCFullYear(),
+  date.getUTCMonth() + 1, // Months are 0-indexed in JS
+  date.getUTCDate(),
+  date.getUTCHours(),
+  date.getUTCMinutes(),
+];
 
 export async function GET(
   _request: NextRequest,
@@ -23,15 +31,10 @@ export async function GET(
     // Map bookings to iCalendar event format
     const events = bookings.map(
       (booking): EventAttributes => ({
-        start: [
-          new Date(booking.date).getUTCFullYear(),
-          new Date(booking.date).getUTCMonth() + 1, // Months are 0-indexed in JS
-          new Date(booking.date).getUTCDate(),
-          new Date(booking.date).getUTCHours(),
-          new Date(booking.date).getUTCMinutes(),
-        ],
+        start: toDateArray(booking.date),
         startInputType: "utc",
-        duration: { hours: 3 },
+        end: toDateArray(booking.end),
+        endInputType: "utc",
         title: `${getEmoji(group)} ${booking.game?.trim() || "Gamesessie"}`,
         // A personal address here makes subscribers' calendars treat the events as that person's own.
         organizer: { name: "wanneer.games", email: "games@wanneer.games" },
