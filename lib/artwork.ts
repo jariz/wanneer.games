@@ -23,6 +23,24 @@ export function getArtworkRotation(): BackdropArtwork[] {
 
 type Image = { image_id: string; width?: number; height?: number };
 
+// Session games without curated artwork use their IGDB artwork, or screenshots when there is none.
+export async function getSessionArtwork(gameIds: number[]): Promise<BackdropArtwork[]> {
+  const curated = new Set(getArtworkRotation().map((game) => game.id));
+  const ids = [...new Set(gameIds)].filter((id) => !curated.has(id));
+  if (!ids.length) return [];
+  const data = await igdbQuery<{ id: number; name: string; artworks?: Image[]; screenshots?: Image[] }>(
+    `fields name,artworks.image_id,screenshots.image_id; where id = (${ids.join(",")}); limit ${ids.length};`,
+    { clientId: env.NEXT_TWITCH_CLIENT_ID, clientSecret: env.NEXT_TWITCH_CLIENT_SECRET },
+    { init: { next: { revalidate: 3600 } } },
+  ).catch(() => []);
+  return data.flatMap(({ id, name, artworks, screenshots }) => {
+    const images = artworks?.length ? artworks : screenshots ?? [];
+    if (!images.length) return [];
+    const urls = [...new Set(images.map((image) => artworkUrl(image.image_id, true)))];
+    return [{ id, name, artwork: urls[Math.floor(Math.random() * urls.length)], artworks: urls }];
+  });
+}
+
 export async function getCuratorGames(id?: number): Promise<CuratorGame[]> {
   const ids = id === undefined ? selection.games.map((game) => game.id) : [id];
   if (!ids.length) return [];

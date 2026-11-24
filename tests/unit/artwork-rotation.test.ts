@@ -9,7 +9,7 @@ vi.mock("@/lib/artwork-selection.json", () => ({ default: {
     { id: 100, name: "Cleared game", artworkIds: [] },
   ],
 } }));
-import { getArtworkRotation, getCuratorGames } from "@/lib/artwork";
+import { getArtworkRotation, getCuratorGames, getSessionArtwork } from "@/lib/artwork";
 import { igdbQuery } from "@/shared/igdb";
 
 test("the rotation uses only saved artwork and does not query IGDB", () => {
@@ -43,4 +43,24 @@ test("the curator keeps whole saved games missing from IGDB", async () => {
     { id: 99, name: "Added game", selected: ["custom1", "custom2"] },
     { id: 100, name: "Cleared game", selected: [] },
   ]);
+});
+
+test("session games without curated artwork fall back to IGDB artwork, then screenshots", async () => {
+  vi.mocked(igdbQuery).mockResolvedValueOnce([
+    { id: 1, name: "Has artwork", artworks: [{ image_id: "art1" }], screenshots: [{ image_id: "shot1" }] },
+    { id: 2, name: "Only screenshots", screenshots: [{ image_id: "shot2" }] },
+    { id: 3, name: "Nothing" },
+  ]);
+  const games = await getSessionArtwork([99, 1, 2, 3, 2]);
+  expect(vi.mocked(igdbQuery).mock.lastCall?.[0]).toContain("where id = (1,2,3);");
+  expect(games).toEqual([
+    { id: 1, name: "Has artwork", artwork: "https://images.igdb.com/igdb/image/upload/t_1080p_2x/art1.jpg", artworks: ["https://images.igdb.com/igdb/image/upload/t_1080p_2x/art1.jpg"] },
+    { id: 2, name: "Only screenshots", artwork: "https://images.igdb.com/igdb/image/upload/t_1080p_2x/shot2.jpg", artworks: ["https://images.igdb.com/igdb/image/upload/t_1080p_2x/shot2.jpg"] },
+  ]);
+});
+
+test("curated session games skip IGDB", async () => {
+  vi.mocked(igdbQuery).mockClear();
+  expect(await getSessionArtwork([99])).toEqual([]);
+  expect(igdbQuery).not.toHaveBeenCalled();
 });

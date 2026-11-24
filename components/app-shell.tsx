@@ -31,10 +31,11 @@ function ClanTabs() {
   );
 }
 
-export default function AppShell({ access, backdrops, backgrounds, initialNow, children }: {
+export default function AppShell({ access, backdrops, backgrounds, sessionArtwork, initialNow, children }: {
   access: ClanAccess;
   backdrops: Record<Clan, { sessions: Pick<Session, "start" | "end" | "igdbGameId">[] }>;
   backgrounds: BackdropArtwork[];
+  sessionArtwork: BackdropArtwork[];
   initialNow: number;
   children: React.ReactNode;
 }) {
@@ -45,10 +46,11 @@ export default function AppShell({ access, backdrops, backgrounds, initialNow, c
   const group = params.group;
   const next = backdrops[group].sessions.find(({ end }) => Date.parse(end) > now);
   const { live } = sessionTiming(next, now);
+  const featured = [...backgrounds, ...sessionArtwork].find((art) => art.id === next?.igdbGameId) ?? null;
 
   return (
     <PlanningAccess group={group} {...access[group]}>
-      <BackdropProvider backgrounds={backgrounds} featured={backgrounds.find((art) => art.id === next?.igdbGameId) ?? null}>
+      <BackdropProvider backgrounds={backgrounds} featured={featured}>
         <div className="relative flex min-h-dvh flex-col" data-clan={group} data-glass-tone={pathname.endsWith("/inplannen") ? "dark" : "clear"}>
           <Backdrop live={live} />
           <AgentBridge />
